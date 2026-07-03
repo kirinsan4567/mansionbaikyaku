@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>マンション売却シミュレーター</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --paper:#F3F1EA;
+    --panel:#FFFFFF;
+    --ink:#1E2A24;
+    --ink-soft:#5B6660;
+    --line:#DAD5C7;
+    --navy:#22403A;
+    --navy-deep:#152D28;
+    --amber:#B8823D;
+    --amber-soft:#F4E7D2;
+    --danger:#A6432F;
+    --danger-soft:#F5E1DC;
+    --radius:10px;
+    --shadow:0 1px 2px rgba(30,42,36,0.06);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Noto Sans JP',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{
+    max-width:480px;
+    margin:0 auto;
+    min-height:100vh;
+    background:var(--paper);
+    padding-bottom:96px;
+  }
+  header.masthead{
+    padding:28px 20px 18px;
+    border-bottom:1px solid var(--line);
+  }
+  header.masthead .eyebrow{
+    font-size:12px;
+    letter-spacing:.08em;
+    color:var(--ink-soft);
+    margin:0 0 6px;
+  }
+  header.masthead h1{
+    font-family:'Shippori Mincho',serif;
+    font-size:22px;
+    font-weight:700;
+    margin:0;
+    line-height:1.4;
+  }
+  .stepper{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    padding:14px 20px;
+  }
+  .stepper .dot{
+    flex:1;
+    height:3px;
+    background:var(--line);
+    border-radius:2px;
+    position:relative;
+  }
+  .stepper .dot.done, .stepper .dot.active{ background:var(--navy); }
+  .step-label{
+    padding:0 20px 6px;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .step-label b{ color:var(--navy); font-weight:700; }
+  main{ padding:6px 20px 20px; }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px;
+    margin-bottom:14px;
+    box-shadow:var(--shadow);
+  }
+  .panel h2{
+    font-family:'Shippori Mincho',serif;
+    font-size:17px;
+    margin:0 0 14px;
+    padding-bottom:10px;
+    border-bottom:1px solid var(--line);
+  }
+  .field{ margin-bottom:14px; }
+  .field:last-child{ margin-bottom:0; }
+  .field label{
+    display:block;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-bottom:5px;
+  }
+  .field .hint{
+    font-size:11px;
+    color:var(--ink-soft);
+    margin-top:4px;
+  }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  input[type=text], input[type=date], input[type=number], select{
+    width:100%;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:#FDFCF9;
+    font-size:14.5px;
+    font-family:inherit;
+    color:var(--ink);
+  }
+  input:focus, select:focus{
+    outline:none;
+    border-color:var(--navy);
+    box-shadow:0 0 0 3px rgba(34,64,58,0.12);
+  }
+  .radio-list label{
+    display:flex;
+    align-items:flex-start;
+    gap:8px;
+    font-size:13.5px;
+    padding:8px 0;
+    border-bottom:1px solid var(--line);
+    color:var(--ink);
+  }
+  .radio-list label:last-child{ border-bottom:none; }
+  .radio-list input{ margin-top:3px; }
+  .slider-row{ display:flex; align-items:center; gap:10px; }
+  input[type=range]{ flex:1; accent-color:var(--navy); }
+  .slider-val{ font-weight:700; min-width:52px; text-align:right; font-size:14.5px; }
+  .segmented{ display:flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  .segmented button{
+    flex:1; padding:9px 4px; font-size:13px; background:#FDFCF9; border:none;
+    color:var(--ink-soft); cursor:pointer; font-family:inherit;
+  }
+  .segmented button.active{ background:var(--navy); color:#fff; }
+  .yearline{ max-height:220px; overflow-y:auto; border:1px solid var(--line); border-radius:8px; }
+  .yearline .yr{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:8px 10px; border-bottom:1px solid var(--line); font-size:13px;
+  }
+  .yearline .yr:last-child{ border-bottom:none; }
+  .yearline select{ width:110px; padding:6px 8px; font-size:13px; }
+  .bulk-btn{
+    font-size:11px; color:var(--navy); background:none; border:none;
+    text-decoration:underline; cursor:pointer; padding:0; font-family:inherit;
+  }
+  footer.navbar{
+    max-width:480px;
+    margin:0 auto;
+    position:sticky;
+    bottom:0;
+    background:var(--paper);
+    border-top:1px solid var(--line);
+    padding:12px 20px calc(12px + env(safe-area-inset-bottom));
+    display:flex;
+    gap:8px;
+  }
+  button.nav-btn{
+    padding:12px;
+    border-radius:8px;
+    font-size:15px;
+    font-family:inherit;
+    cursor:pointer;
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--ink);
+  }
+  button.nav-btn.primary{
+    flex:1;
+    background:var(--navy);
+    border-color:var(--navy);
+    color:#fff;
+    font-weight:700;
+  }
+  button.nav-btn.back{ width:56px; }
+  .util-row{ display:flex; gap:8px; padding:10px 20px 0; }
+  .util-row button{
+    flex:1; font-size:12px; padding:8px; border-radius:8px; border:1px solid var(--line);
+    background:#fff; color:var(--ink-soft); cursor:pointer; font-family:inherit;
+  }
+  /* --- STEP6 results --- */
+  .summary-grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .sum-card{
+    background:#FDFCF9; border:1px solid var(--line); border-radius:8px;
+    padding:10px 8px; text-align:center;
+  }
+  .sum-card.reco{ border:2px solid var(--amber); background:var(--amber-soft); }
+  .sum-card .lbl{ font-size:10.5px; color:var(--ink-soft); margin-bottom:4px; }
+  .sum-card .val{ font-size:15px; font-weight:700; }
+  .blurred{ filter:blur(6px); user-select:none; }
+  .lockbox{
+    text-align:center; padding:22px 16px; background:#FDFCF9;
+    border:1px dashed var(--line); border-radius:8px; margin-top:12px;
+  }
+  .lockbox p{ font-size:13px; color:var(--ink-soft); margin:0 0 12px; }
+  .lockbox input{ text-align:center; letter-spacing:.1em; margin-bottom:10px; }
+  .lockbox button{
+    background:var(--navy); color:#fff; border:none; padding:10px 20px;
+    border-radius:8px; font-size:14px; cursor:pointer; font-family:inherit;
+  }
+  .err-msg{ color:var(--danger); font-size:12px; margin-top:6px; display:none; }
+  table.tax-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  table.tax-table td{ padding:7px 0; border-bottom:1px solid var(--line); }
+  table.tax-table td:last-child{ text-align:right; font-weight:500; }
+  .chart-wrap{ position:relative; height:220px; margin-top:6px; }
+  .note-box{
+    background:var(--danger-soft); border:1px solid #E4C4BA; border-radius:8px;
+    padding:12px; font-size:11.5px; color:#6B2E20; line-height:1.6; margin-top:14px;
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <header class="masthead">
+    <p class="eyebrow">KIRIN 不動産売却益シミュレーター</p>
+    <h1>マンション売却シミュレーション</h1>
+  </header>
+
+  <div class="stepper" id="stepper"></div>
+  <div class="step-label" id="stepLabel"></div>
+
+  <div class="util-row">
+    <button onclick="exportData()"><i>入力内容を保存</i></button>
+    <label style="flex:1;">
+      <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)">
+      <button type="button" onclick="document.getElementById('importFile').click()">読み込む</button>
+    </label>
+  </div>
+
+  <main id="main"></main>
+
+  <footer class="navbar">
+    <button class="nav-btn back" onclick="goStep(-1)">戻</button>
+    <button class="nav-btn primary" id="nextBtn" onclick="goStep(1)">次へ</button>
+  </footer>
+</div>
+
+<script>
+/* =========================================================
+   0. 定数・データテーブル
+========================================================= */
+const STRUCTURES = ["木造","木造モルタル","軽量鉄骨造1","軽量鉄骨造2","重量鉄骨造","RC造","SRC造","れんが造"];
+
+const DEPRECIATION_TABLE = {
+  "木造":        { 住宅用:{new:0.031, usedFallback:0.03030, legalLife:22, residentialLife:33}, 事業用:{new:0.042, usedFallback:0.04166, legalLife:24, residentialLife:24} },
+  "木造モルタル": { 住宅用:{new:0.034, usedFallback:0.03333, legalLife:20, residentialLife:30}, 事業用:{new:0.046, usedFallback:0.04545, legalLife:22, residentialLife:22} },
+  "軽量鉄骨造1": { 住宅用:{new:0.036, usedFallback:0.03571, legalLife:19, residentialLife:28}, 事業用:{new:0.046, usedFallback:0.04545, legalLife:22, residentialLife:22} },
+  "軽量鉄骨造2": { 住宅用:{new:0.025, usedFallback:0.02500, legalLife:27, residentialLife:40}, 事業用:{new:0.034, usedFallback:0.03333, legalLife:30, residentialLife:30} },
+  "重量鉄骨造":  { 住宅用:{new:0.020, usedFallback:0.01960, legalLife:34, residentialLife:51}, 事業用:{new:0.027, usedFallback:0.02631, legalLife:38, residentialLife:38} },
+  "RC造":        { 住宅用:{new:0.015, usedFallback:0.01428, legalLife:47, residentialLife:70}, 事業用:{new:0.020, usedFallback:0.02000, legalLife:50, residentialLife:50} },
+  "SRC造":       { 住宅用:{new:0.015, usedFallback:0.01428, legalLife:47, residentialLife:70}, 事業用:{new:0.020, usedFallback:0.02000, legalLife:50, residentialLife:50} },
+  "れんが造":    { 住宅用:{new:0.018, usedFallback:0.01754, legalLife:38, residentialLife:57}, 事業用:{new:0.025, usedFallback:0.02439, legalLife:41, residentialLife:41} }
+};
+
+const PRICE_SCENARIOS = {
+  best:     { label:"ベスト(年3%上昇)",       rates:[1.0000,1.0300,1.0299,1.0302,1.0300,1.0299,1.0300,1.0302,1.0299,1.0300,1.0300,1.0301,1.0300,1.0300,1.0300,1.0299] },
+  moderate: { label:"モデレート(年1%上昇後安定)", rates:[1.0000,1.0100,1.0099,1.0102,1.0101,1.0100,1.0099,1.0102,1.0101,1.0100,1.0099,1.0000,1.0000,1.0000,1.0000,1.0000] },
+  worst:    { label:"ワースト(年2-3%下落)",     rates:[1.0000,0.9800,0.9796,0.9792,0.9787,0.9783,0.9778,0.9773,0.9767,0.9762,0.9756,0.9700,0.9691,0.9681,0.9670,0.9659] }
+};
+const BASE_YEAR = 2026;
+
+const PASSCODE_HASH_PLACEHOLDER = null; // note記事側で発行するパスコードのSHA-256をここに設定
+
+/* =========================================================
+   1. 状態管理
+========================================================= */
+const defaultState = {
+  step:1,
+  contractDate:"", totalPrice:23000, floorArea:71.37, structure:"RC造",
+  buildType:"新築", completionDate:"", initialUse:"自宅用", planToMove:"予定なし",
+  expenseRate:2.69, expenseAmount:null,
+  allocMethod:"contract", contractLandPrice:null, contractBuildingPrice:null,
+  consumptionTax:null, landAssessedValue:null, buildingAssessedValue:null, manualBuildingPrice:null,
+  yearUsage:{}, // { "2026":"自宅用", ... }
+
+  priceInputMode:"scenario", scenario:"moderate", futurePrice:null, growthRate:null,
+  saleMode:"year", saleYear:2033, saleDate:"",
+
+  brokerageFeeRate:1.5,
+
+  maintenanceFee:15000, repairFund:20000, propertyTax:120000, otherCost:0,
+  repairIncrease:false,
+
+  loanBalance:0, loanRate:1.0, loanType:"変動",
+
+  unlocked:false
+};
+let state = JSON.parse(JSON.stringify(defaultState));
+
+function loadState(){
+  try{
+    const saved = localStorage.getItem('mansionbaikyaku_state');
+    if(saved){ state = Object.assign({}, defaultState, JSON.parse(saved)); }
+  }catch(e){}
+}
+function saveState(){
+  try{ localStorage.setItem('mansionbaikyaku_state', JSON.stringify(state)); }catch(e){}
+}
+function exportData(){
+  const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = "mansionbaikyaku_input.json"; a.click();
+  URL.revokeObjectURL(url);
+}
+function importData(ev){
+  const file = ev.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const data = JSON.parse(e.target.result);
+      state = Object.assign({}, defaultState, data);
+      saveState(); render();
+    }catch(err){ alert("読み込みに失敗しました。ファイル形式をご確認ください。"); }
+  };
+  reader.readAsText(file);
+}
+
+/* =========================================================
+   2. 計算ロジック
+========================================================= */
+function calcElapsedYears(fromDateStr, toDateStr){
+  if(!fromDateStr || !toDateStr) return 0;
+  const from = new Date(fromDateStr), to = new Date(toDateStr);
+  let months = (to.getFullYear()-from.getFullYear())*12 + (to.getMonth()-from.getMonth());
+  const dayDiff = to.getDate()-from.getDate();
+  if(dayDiff < 0) months -= 1;
+  let years = Math.floor(months/12);
+  const remMonths = months % 12;
+  if(remMonths >= 6) years += 1;
+  return Math.max(years,0);
+}
+
+function determineBuildingPrice(s){
+  const total = Number(s.totalPrice)||0;
+  if(s.allocMethod==="contract" && s.contractLandPrice && s.contractBuildingPrice){
+    return { building:Number(s.contractBuildingPrice), land:Number(s.contractLandPrice), method:"契約書記載" };
+  }
+  if(s.allocMethod==="tax" && s.consumptionTax){
+    const TAX_RATE = 0.10;
+    const buildingExTax = Number(s.consumptionTax)/TAX_RATE;
+    const buildingIncTax = buildingExTax*(1+TAX_RATE);
+    return { building:buildingIncTax, land: total-buildingIncTax, method:"消費税逆算" };
+  }
+  if(s.allocMethod==="assessed" && s.landAssessedValue && s.buildingAssessedValue){
+    const ratio = Number(s.buildingAssessedValue)/(Number(s.landAssessedValue)+Number(s.buildingAssessedValue));
+    return { building: total*ratio, land: total*(1-ratio), method:"固定資産税評価額按分" };
+  }
+  const b = Number(s.manualBuildingPrice)||0;
+  return { building:b, land: total-b, method:"手入力" };
+}
+
+function allocateExpenses(totalExpenses, buildingPrice, totalPrice){
+  const ratio = totalPrice>0 ? buildingPrice/totalPrice : 0;
+  return { buildingExpenses: totalExpenses*ratio, landExpenses: totalExpenses*(1-ratio) };
+}
+
+function calcResidualUsefulLife(residentialLife, elapsedYearsAtPurchase){
+  let n;
+  if(elapsedYearsAtPurchase >= residentialLife){
+    n = Math.floor(residentialLife*0.2);
+  } else {
+    n = Math.floor((residentialLife-elapsedYearsAtPurchase) + elapsedYearsAtPurchase*0.2);
+  }
+  return Math.max(n,2);
+}
+function calcUsedDepreciationRate(n){
+  return Math.floor((1/n)*100000)/100000;
+}
+
+function getDepreciationRateForYear(s, usage, buildingPriceAtPurchase, purchaseElapsedAtBuy){
+  const table = DEPRECIATION_TABLE[s.structure]["住宅用"]; // 残存耐用年数計算は住宅用ベースで統一
+  const usageTable = DEPRECIATION_TABLE[s.structure][usage];
+  if(s.buildType === "新築"){
+    return usageTable.new;
+  } else {
+    const n = calcResidualUsefulLife(table.residentialLife, purchaseElapsedAtBuy);
+    return calcUsedDepreciationRate(n);
+  }
+}
+
+function getYearUsage(s, year){
+  return s.yearUsage[year] || s.initialUse;
+}
+
+function priceForYear(s, year){
+  const idx = year - BASE_YEAR;
+  const rates = PRICE_SCENARIOS[s.scenario].rates;
+  const clampedIdx = Math.max(0, Math.min(idx, rates.length-1));
+  const basePrice = Number(s.totalPrice)||0;
+  if(s.priceInputMode==="futurePrice" && s.futurePrice && year===s.saleYear){
+    return Number(s.futurePrice);
+  }
+  return basePrice * rates[clampedIdx];
+}
+
+function runFullCalculation(s){
+  const alloc = determineBuildingPrice(s);
+  const expenseTotal = s.expenseAmount ? Number(s.expenseAmount) : Number(s.totalPrice)*Number(s.expenseRate)/100;
+  const expAlloc = allocateExpenses(expenseTotal, alloc.building, Number(s.totalPrice));
+  const buildingAcqCost = alloc.building + expAlloc.buildingExpenses;
+  const landAcqCost = alloc.land + expAlloc.landExpenses;
+
+  const purchaseElapsed = calcElapsedYears(s.completionDate, s.contractDate);
+
+  const saleYear = s.saleMode==="date" && s.saleDate ? new Date(s.saleDate).getFullYear() : s.saleYear;
+  const holdingYears = calcElapsedYears(s.contractDate, s.saleMode==="date"&&s.saleDate ? s.saleDate : `${saleYear}-01-01`);
+
+  // 年別減価償却の積み上げ
+  let cumulativeDepreciation = 0;
+  const startYear = s.contractDate ? new Date(s.contractDate).getFullYear() : BASE_YEAR;
+  for(let y=startYear; y<saleYear; y++){
+    const usage = getYearUsage(s, y);
+    const rate = getDepreciationRateForYear(s, usage, alloc.building, purchaseElapsed);
+    const annual = Math.min(buildingAcqCost*0.9*rate, buildingAcqCost*0.95 - cumulativeDepreciation);
+    cumulativeDepreciation += Math.max(annual,0);
+  }
+
+  const acquisitionCost = (buildingAcqCost - cumulativeDepreciation) + landAcqCost;
+
+  const salePrice = priceForYear(s, saleYear);
+  const saleExpense = salePrice * Number(s.brokerageFeeRate)/100;
+
+  const gain = salePrice - acquisitionCost - saleExpense;
+  const isLongTerm = holdingYears >= 5;
+
+  // 税率(簡略版:短期/長期のみ、10年超6000万特例は概算)
+  let taxRate, incomeTaxRate, residentTaxRate;
+  if(!isLongTerm){ taxRate=0.3963; incomeTaxRate=0.3063; residentTaxRate=0.09; }
+  else if(holdingYears < 10){ taxRate=0.20315; incomeTaxRate=0.15315; residentTaxRate=0.05; }
+  else { taxRate=0.1421; incomeTaxRate=0.1021; residentTaxRate=0.04; }
+
+  const taxNoException = Math.max(gain,0) * taxRate;
+
+  // 3,000万円控除
+  const gainAfter3000 = Math.max(gain - 30000000, 0);
+  const tax3000 = gainAfter3000 * taxRate;
+
+  // 買換え特例(課税繰延:今回課税ゼロ、将来に繰延)
+  const taxDeferred = 0;
+
+  const netCashCurrentMax = Math.max(salePrice - saleExpense - Math.min(tax3000,taxNoException) - Number(s.loanBalance), salePrice - saleExpense - taxDeferred - Number(s.loanBalance));
+  const netCashTaxMin = salePrice - saleExpense - Math.min(tax3000, taxDeferred, taxNoException) - Number(s.loanBalance);
+
+  return {
+    alloc, buildingAcqCost, landAcqCost, cumulativeDepreciation, acquisitionCost,
+    salePrice, saleExpense, gain, isLongTerm, holdingYears, taxRate,
+    taxNoException, tax3000, taxDeferred,
+    patterns:{
+      taxMin: Math.min(tax3000, taxDeferred),
+      currentMax: Math.max(salePrice-saleExpense-tax3000, salePrice-saleExpense-taxDeferred),
+      futureAware: taxDeferred
+    }
+  };
+}
+
+function yen(n){
+  if(n===null||n===undefined||isNaN(n)) return "-";
+  return Math.round(n).toLocaleString('ja-JP') + "円";
+}
+function man(n){
+  if(n===null||n===undefined||isNaN(n)) return "-";
+  return Math.round(n/10000).toLocaleString('ja-JP') + "万円";
+}
+
+/* =========================================================
+   3. パスコード確認
+========================================================= */
+async function sha256(text){
+  const enc = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+/* =========================================================
+   4. 画面描画
+========================================================= */
+const STEP_LABELS = ["基本条件","価格予測","課税額計算","維持コスト","住宅ローン","結果"];
+
+function render(){
+  renderStepper();
+  document.getElementById('stepLabel').innerHTML = `STEP ${state.step} / 6 <b>${STEP_LABELS[state.step-1]}</b>`;
+  document.getElementById('nextBtn').textContent = state.step<6 ? `次へ:${STEP_LABELS[state.step] || ''}` : 'もう一度計算';
+  const main = document.getElementById('main');
+  main.innerHTML = "";
+  main.appendChild(renderStepBody(state.step));
+  saveState();
+}
+
+function renderStepper(){
+  const el = document.getElementById('stepper');
+  el.innerHTML = "";
+  for(let i=1;i<=6;i++){
+    const d = document.createElement('div');
+    d.className = 'dot' + (i<state.step ? ' done' : (i===state.step ? ' active':''));
+    el.appendChild(d);
+  }
+}
+
+function el(tag, attrs={}, children=[]){
+  const e = document.createElement(tag);
+  Object.entries(attrs).forEach(([k,v])=>{
+    if(k==='html') e.innerHTML = v;
+    else if(k.startsWith('on')) e.addEventListener(k.substring(2), v);
+    else e.setAttribute(k,v);
+  });
+  (Array.isArray(children)?children:[children]).forEach(c=>{
+    if(typeof c === 'string') e.appendChild(document.createTextNode(c));
+    else if(c) e.appendChild(c);
+  });
+  return e;
+}
+
+function field(labelText, inputEl, hint){
+  const wrap = el('div',{class:'field'});
+  wrap.appendChild(el('label',{},labelText));
+  wrap.appendChild(inputEl);
+  if(hint) wrap.appendChild(el('div',{class:'hint'},hint));
+  return wrap;
+}
+
+function bindInput(input, key, isNumber){
+  input.value = state[key] ?? "";
+  input.addEventListener('input', ()=>{
+    state[key] = isNumber ? (input.value===""?null:Number(input.value)) : input.value;
+    saveState();
+  });
+  return input;
+}
+function bindSelect(select, key, options){
+  options.forEach(o=>{
+    const opt = document.createElement('option');
+    opt.value = o; opt.textContent = o;
+    if(state[key]===o) opt.selected = true;
+    select.appendChild(opt);
+  });
+  select.addEventListener('change', ()=>{ state[key]=select.value; saveState(); render(); });
+  return select;
+}
+
+/* ---------- STEP 1 ---------- */
+function renderStep1(){
+  const wrap = document.createDocumentFragment();
+
+  const p1 = el('div',{class:'panel'});
+  p1.appendChild(el('h2',{},'物件の基本情報'));
+  p1.appendChild(field('契約日(購入日)', bindInput(el('input',{type:'date'}),'contractDate')));
+  const row1 = el('div',{class:'row2'});
+  row1.appendChild(field('物件価格(万円)', bindInput(el('input',{type:'number'}),'totalPrice',true)));
+  row1.appendChild(field('専有面積(㎡)', bindInput(el('input',{type:'number', step:'0.01'}),'floorArea',true)));
+  p1.appendChild(row1);
+  p1.appendChild(field('建物構造', bindSelect(el('select'),'structure',STRUCTURES)));
+  const row2 = el('div',{class:'row2'});
+  row2.appendChild(field('新築・中古', bindSelect(el('select'),'buildType',['新築','中古'])));
+  row2.appendChild(field('竣工日', bindInput(el('input',{type:'date'}),'completionDate')));
+  p1.appendChild(row2);
+  wrap.appendChild(p1);
+
+  const p2 = el('div',{class:'panel'});
+  p2.appendChild(el('h2',{},'土地・建物の価格按分'));
+  const radioWrap = el('div',{class:'radio-list'});
+  const methods = [
+    ['contract','契約書に土地・建物の内訳記載がある'],
+    ['tax','契約書に消費税額の記載がある(課税売買)'],
+    ['assessed','固定資産税評価額がわかる'],
+    ['manual','上記いずれも不明(手入力)']
+  ];
+  methods.forEach(([val,label])=>{
+    const lbl = el('label',{});
+    const radio = el('input',{type:'radio', name:'allocMethod'});
+    radio.checked = state.allocMethod===val;
+    radio.addEventListener('change',()=>{ state.allocMethod=val; saveState(); render(); });
+    lbl.appendChild(radio);
+    lbl.appendChild(document.createTextNode(label));
+    radioWrap.appendChild(lbl);
+  });
+  p2.appendChild(radioWrap);
+
+  if(state.allocMethod==='contract'){
+    const r = el('div',{class:'row2', style:'margin-top:12px;'});
+    r.appendChild(field('契約書 土地価格(万円)', bindInput(el('input',{type:'number'}),'contractLandPrice',true)));
+    r.appendChild(field('契約書 建物価格(万円)', bindInput(el('input',{type:'number'}),'contractBuildingPrice',true)));
+    p2.appendChild(r);
+  } else if(state.allocMethod==='tax'){
+    p2.appendChild(field('消費税額(万円)', bindInput(el('input',{type:'number'}),'consumptionTax',true), '建物価格のみに課税される消費税額です'));
+  } else if(state.allocMethod==='assessed'){
+    const r = el('div',{class:'row2', style:'margin-top:12px;'});
+    r.appendChild(field('土地評価額(万円)', bindInput(el('input',{type:'number'}),'landAssessedValue',true)));
+    r.appendChild(field('建物評価額(万円)', bindInput(el('input',{type:'number'}),'buildingAssessedValue',true)));
+    p2.appendChild(r);
+  } else {
+    p2.appendChild(field('建物価格(万円)', bindInput(el('input',{type:'number'}),'manualBuildingPrice',true)));
+  }
+  wrap.appendChild(p2);
+
+  const p3 = el('div',{class:'panel'});
+  p3.appendChild(el('h2',{},'諸経費・用途'));
+  const sliderWrap = el('div',{class:'field'});
+  sliderWrap.appendChild(el('label',{},'購入諸経費率'));
+  const sliderRow = el('div',{class:'slider-row'});
+  const slider = el('input',{type:'range', min:'1', max:'6', step:'0.01'});
+  slider.value = state.expenseRate;
+  const sliderVal = el('span',{class:'slider-val'}, `${state.expenseRate}%`);
+  slider.addEventListener('input', ()=>{ state.expenseRate = Number(slider.value); sliderVal.textContent = `${slider.value}%`; saveState(); });
+  sliderRow.appendChild(slider); sliderRow.appendChild(sliderVal);
+  sliderWrap.appendChild(sliderRow);
+  sliderWrap.appendChild(el('div',{class:'hint'},'実額がわかる場合は下に直接入力してください(優先されます)'));
+  p3.appendChild(sliderWrap);
+  p3.appendChild(field('購入諸経費 実額(万円・任意)', bindInput(el('input',{type:'number'}),'expenseAmount',true)));
+
+  const row3 = el('div',{class:'row2'});
+  row3.appendChild(field('購入目的(初期値)', bindSelect(el('select'),'initialUse',['自宅用','事業用'])));
+  row3.appendChild(field('売却後の住み替え予定', bindSelect(el('select'),'planToMove',['予定なし','予定あり'])));
+  p3.appendChild(row3);
+  wrap.appendChild(p3);
+
+  const p4 = el('div',{class:'panel'});
+  const p4head = el('div',{style:'display:flex;justify-content:space-between;align-items:center;'});
+  p4head.appendChild(el('h2',{style:'border:none;margin:0;padding:0;'},'年別の用途(自宅用/事業用)'));
+  p4.appendChild(p4head);
+  p4.appendChild(el('div',{class:'hint', style:'margin-bottom:10px;'},'自宅→賃貸への転用など、年によって用途が変わる場合に設定してください。'));
+  const yearline = el('div',{class:'yearline'});
+  const startY = state.contractDate ? new Date(state.contractDate).getFullYear() : BASE_YEAR;
+  const endY = state.saleMode==='date' && state.saleDate ? new Date(state.saleDate).getFullYear() : state.saleYear;
+  for(let y=startY; y<=endY; y++){
+    const row = el('div',{class:'yr'});
+    row.appendChild(el('span',{},`${y}年`));
+    const sel = el('select');
+    ['自宅用','事業用'].forEach(o=>{
+      const opt = document.createElement('option'); opt.value=o; opt.textContent=o;
+      if((state.yearUsage[y]||state.initialUse)===o) opt.selected=true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', ()=>{ state.yearUsage[y]=sel.value; saveState(); });
+    const bulk = el('button',{class:'bulk-btn'},'以降一括');
+    bulk.addEventListener('click', ()=>{
+      for(let yy=y; yy<=endY; yy++){ state.yearUsage[yy]=sel.value; }
+      saveState(); render();
+    });
+    const rightWrap = el('div',{style:'display:flex;align-items:center;gap:8px;'});
+    rightWrap.appendChild(sel); rightWrap.appendChild(bulk);
+    row.appendChild(rightWrap);
+    yearline.appendChild(row);
+  }
+  p4.appendChild(yearline);
+  wrap.appendChild(p4);
+
+  return wrap;
+}
+
+/* ---------- STEP 2 ---------- */
+function renderStep2(){
+  const wrap = document.createDocumentFragment();
+  const p1 = el('div',{class:'panel'});
+  p1.appendChild(el('h2',{},'価格予測シナリオ'));
+  const seg = el('div',{class:'segmented'});
+  Object.entries(PRICE_SCENARIOS).forEach(([key,v])=>{
+    const btn = el('button',{}, v.label);
+    if(state.scenario===key) btn.classList.add('active');
+    btn.addEventListener('click', ()=>{ state.scenario=key; state.priceInputMode='scenario'; saveState(); render(); });
+    seg.appendChild(btn);
+  });
+  p1.appendChild(field('市場予測パターンから選ぶ', seg));
+
+  p1.appendChild(field('または、将来の売却価格を直接入力(万円)',
+    (()=>{ const i = bindInput(el('input',{type:'number'}),'futurePrice',true);
+      i.addEventListener('change', ()=>{ if(i.value){ state.priceInputMode='futurePrice'; saveState(); } });
+      return i; })(),
+    '入力すると、この価格を優先して計算します'));
+
+  wrap.appendChild(p1);
+
+  const p2 = el('div',{class:'panel'});
+  p2.appendChild(el('h2',{},'売却タイミング'));
+  const seg2 = el('div',{class:'segmented'});
+  ['year','date'].forEach(v=>{
+    const btn = el('button',{}, v==='year' ? '年で選ぶ':'日付を指定');
+    if(state.saleMode===v) btn.classList.add('active');
+    btn.addEventListener('click', ()=>{ state.saleMode=v; saveState(); render(); });
+    seg2.appendChild(btn);
+  });
+  p2.appendChild(field('売却タイミングの指定方法', seg2));
+
+  if(state.saleMode==='year'){
+    const sel = el('select');
+    for(let y=2026;y<=2041;y++){
+      const opt = document.createElement('option'); opt.value=y; opt.textContent=`${y}年`;
+      if(state.saleYear===y) opt.selected=true;
+      sel.appendChild(opt);
+    }
+    sel.addEventListener('change', ()=>{ state.saleYear=Number(sel.value); saveState(); render(); });
+    p2.appendChild(field('売却予定年', sel));
+  } else {
+    p2.appendChild(field('売却予定日', bindInput(el('input',{type:'date'}),'saleDate')));
+  }
+  wrap.appendChild(p2);
+  return wrap;
+}
+
+/* ---------- STEP 3 ---------- */
+function renderStep3(){
+  const wrap = document.createDocumentFragment();
+  const p1 = el('div',{class:'panel'});
+  p1.appendChild(el('h2',{},'売却時の諸経費'));
+  p1.appendChild(field('仲介手数料率(%)', bindInput(el('input',{type:'number', step:'0.1'}),'brokerageFeeRate',true), 'デフォルト:売却価格の1.5%'));
+  wrap.appendChild(p1);
+
+  const p2 = el('div',{class:'panel'});
+  p2.appendChild(el('h2',{},'計算方式について'));
+  p2.appendChild(el('p',{style:'font-size:12.5px;color:var(--ink-soft);line-height:1.7;margin:0;'},
+    '新築購入の場合は固定の償却率テーブル、中古購入の場合は国税庁の簡便法(経過年数に応じた残存耐用年数の計算)で減価償却費を算出します。譲渡益・譲渡損失いずれの場合も、適用できる特例を自動判定し、STEP6で複数パターンを比較表示します。'));
+  wrap.appendChild(p2);
+  return wrap;
+}
+
+/* ---------- STEP 4 ---------- */
+function renderStep4(){
+  const wrap = document.createDocumentFragment();
+  const p1 = el('div',{class:'panel'});
+  p1.appendChild(el('h2',{},'保有中の維持コスト(月額)'));
+  const row1 = el('div',{class:'row2'});
+  row1.appendChild(field('管理費(円/月)', bindInput(el('input',{type:'number'}),'maintenanceFee',true)));
+  row1.appendChild(field('修繕積立金(円/月)', bindInput(el('input',{type:'number'}),'repairFund',true)));
+  p1.appendChild(row1);
+  const row2 = el('div',{class:'row2'});
+  row2.appendChild(field('固定資産税・都市計画税(円/年)', bindInput(el('input',{type:'number'}),'propertyTax',true)));
+  row2.appendChild(field('その他(円/年)', bindInput(el('input',{type:'number'}),'otherCost',true)));
+  p1.appendChild(row2);
+  wrap.appendChild(p1);
+
+  const p2 = el('div',{class:'panel'});
+  const toggleWrap = el('label',{style:'display:flex;align-items:center;gap:8px;font-size:13.5px;'});
+  const cb = el('input',{type:'checkbox'});
+  cb.checked = state.repairIncrease;
+  cb.addEventListener('change', ()=>{ state.repairIncrease = cb.checked; saveState(); });
+  toggleWrap.appendChild(cb);
+  toggleWrap.appendChild(document.createTextNode('修繕積立金の将来増額を見込む(総会資料等がある場合)'));
+  p2.appendChild(toggleWrap);
+  p2.appendChild(el('div',{class:'hint', style:'margin-top:8px;'},'一旦は据え置き計算(月額×保有年数)です。増額シナリオの詳細入力は今後のアップデートで追加予定です。'));
+  wrap.appendChild(p2);
+  return wrap;
+}
+
+/* ---------- STEP 5 ---------- */
+function renderStep5(){
+  const wrap = document.createDocumentFragment();
+  const p1 = el('div',{class:'panel'});
+  p1.appendChild(el('h2',{},'住宅ローン(売却時点)'));
+  p1.appendChild(field('売却時点の残債(万円)', bindInput(el('input',{type:'number'}),'loanBalance',true)));
+  const row1 = el('div',{class:'row2'});
+  row1.appendChild(field('金利タイプ', bindSelect(el('select'),'loanType',['変動','固定'])));
+  row1.appendChild(field('金利(%)', bindInput(el('input',{type:'number', step:'0.01'}),'loanRate',true)));
+  p1.appendChild(row1);
+  p1.appendChild(el('div',{class:'hint'},'※将来的に、KIRIN住宅ローンシミュレーターからのインポート機能を追加予定です。'));
+  wrap.appendChild(p1);
+  return wrap;
+}
+
+/* ---------- STEP 6 ---------- */
+let chartInstance = null;
+function renderStep6(){
+  const wrap = document.createDocumentFragment();
+  const result = runFullCalculation(state);
+
+  const p1 = el('div',{class:'panel'});
+  p1.appendChild(el('h2',{},'手取り額サマリー(3パターン比較)'));
+  const grid = el('div',{class:'summary-grid'});
+  const cards = [
+    ['税額最小', result.patterns.taxMin!==undefined ? man(result.salePrice-result.saleExpense-result.patterns.taxMin-Number(state.loanBalance)*10000) : '-', false],
+    ['現在手取り最大', man(result.patterns.currentMax-Number(state.loanBalance)*10000), true],
+    ['将来影響考慮', state.unlocked ? man(result.patterns.currentMax-Number(state.loanBalance)*10000) : null, false]
+  ];
+  cards.forEach(([lbl,val,reco])=>{
+    const c = el('div',{class:'sum-card'+(reco?' reco':'')});
+    c.appendChild(el('div',{class:'lbl'},lbl+(reco?' ★':'')));
+    c.appendChild(el('div',{class:'val'+(val===null?' blurred':'')}, val===null ? '●●●万円' : val));
+    grid.appendChild(c);
+  });
+  p1.appendChild(grid);
+  wrap.appendChild(p1);
+
+  if(!state.unlocked){
+    const lockp = el('div',{class:'panel'});
+    lockp.appendChild(el('h2',{},'詳細結果を見る'));
+    const box = el('div',{class:'lockbox'});
+    box.appendChild(el('p',{},'正確な税額内訳・詳細な比較・キャッシュフロー推移グラフは、noteの有料記事に記載されたパスコードで解除できます。'));
+    const pinput = el('input',{type:'text', placeholder:'パスコードを入力'});
+    box.appendChild(pinput);
+    const errMsg = el('div',{class:'err-msg'},'パスコードが正しくありません。');
+    const btn = el('button',{}, '解除する');
+    btn.addEventListener('click', async ()=>{
+      const hash = await sha256(pinput.value.trim());
+      if(PASSCODE_HASH_PLACEHOLDER && hash===PASSCODE_HASH_PLACEHOLDER){
+        state.unlocked = true; saveState(); render();
+      } else {
+        errMsg.style.display='block';
+      }
+    });
+    box.appendChild(btn);
+    box.appendChild(errMsg);
+    lockp.appendChild(box);
+    wrap.appendChild(lockp);
+  } else {
+    const p2 = el('div',{class:'panel'});
+    p2.appendChild(el('h2',{},'税額内訳'));
+    const table = el('table',{class:'tax-table'});
+    const rows = [
+      ['譲渡価格', man(result.salePrice)],
+      ['取得費', man(result.acquisitionCost)],
+      ['譲渡諸経費', man(result.saleExpense)],
+      ['譲渡所得(控除前)', man(result.gain)],
+      ['保有期間', `${result.holdingYears}年(${result.isLongTerm?'長期譲渡':'短期譲渡'})`],
+      ['税額(特例なし)', man(result.taxNoException)],
+      ['税額(3,000万円控除適用)', man(result.tax3000)],
+      ['税額(買換え特例=繰延)', man(result.taxDeferred)]
+    ];
+    rows.forEach(([k,v])=>{
+      const tr = document.createElement('tr');
+      tr.appendChild(el('td',{},k));
+      tr.appendChild(el('td',{},v));
+      table.appendChild(tr);
+    });
+    p2.appendChild(table);
+    wrap.appendChild(p2);
+
+    const p3 = el('div',{class:'panel'});
+    p3.appendChild(el('h2',{},'保有期間の収支推移'));
+    const chartWrap = el('div',{class:'chart-wrap'});
+    const canvas = el('canvas');
+    chartWrap.appendChild(canvas);
+    p3.appendChild(chartWrap);
+    wrap.appendChild(p3);
+    setTimeout(()=>drawChart(canvas, state), 0);
+  }
+
+  const note = el('div',{class:'note-box'});
+  note.innerHTML = '3,000万円特別控除を選択すると、その前後数年間(目安:控除適用年から4年程度)は新居の住宅ローン控除が使えなくなる可能性があります。また、各特例の適用期限・要件は税制改正により変更されることがあります。最終的な判断の前に、税理士または国税庁サイトでのご確認をおすすめします。';
+  wrap.appendChild(note);
+
+  return wrap;
+}
+
+function drawChart(canvas, s){
+  if(chartInstance) chartInstance.destroy();
+  const startY = s.contractDate ? new Date(s.contractDate).getFullYear() : BASE_YEAR;
+  const endY = s.saleMode==='date' && s.saleDate ? new Date(s.saleDate).getFullYear() : s.saleYear;
+  const labels = []; const data = [];
+  for(let y=startY;y<=endY;y++){
+    labels.push(y);
+    data.push(Math.round(priceForYear(s,y)/10000));
+  }
+  chartInstance = new Chart(canvas, {
+    type:'bar',
+    data:{ labels, datasets:[{ label:'想定物件価格(万円)', data, backgroundColor:'#22403A' }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{ y:{ beginAtZero:false, ticks:{ font:{size:10} } }, x:{ ticks:{ font:{size:10} } } }
+    }
+  });
+}
+
+/* ---------- ステップ振り分け ---------- */
+function renderStepBody(step){
+  switch(step){
+    case 1: return renderStep1();
+    case 2: return renderStep2();
+    case 3: return renderStep3();
+    case 4: return renderStep4();
+    case 5: return renderStep5();
+    case 6: return renderStep6();
+  }
+}
+
+function goStep(delta){
+  const next = state.step + delta;
+  if(next<1){ return; }
+  if(next>6){ render(); return; }
+  state.step = next;
+  saveState();
+  render();
+  window.scrollTo(0,0);
+}
+
+/* =========================================================
+   起動
+========================================================= */
+loadState();
+render();
+</script>
+</body>
+</html>
