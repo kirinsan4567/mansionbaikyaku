@@ -1097,7 +1097,7 @@ function renderStep6(){
     wrap.appendChild(p2b);
 
     const p3 = el('div',{class:'panel'});
-    p3.appendChild(el('h2',{},'保有期間の収支推移'));
+    p3.appendChild(el('h2',{},'含み益の推移(概算)'));
     const chartWrap = el('div',{class:'chart-wrap'});
     const canvas = el('canvas');
     chartWrap.appendChild(canvas);
@@ -1113,18 +1113,25 @@ function renderStep6(){
   return wrap;
 }
 
+function calcAccruedGainForYear(s, year){
+  const price = priceForYear(s, year);
+  const purchaseExpenseTotal = s.expenseAmount ? Number(s.expenseAmount) : Number(s.totalPrice)*Number(s.expenseRate)/100;
+  const saleExpenseAtYear = price * Number(s.brokerageFeeRate)/100;
+  return price - Number(s.totalPrice) - purchaseExpenseTotal - saleExpenseAtYear;
+}
+
 function drawChart(canvas, s){
   if(chartInstance) chartInstance.destroy();
-  const startY = s.contractDate ? new Date(s.contractDate).getFullYear() : BASE_YEAR;
-  const endY = s.saleMode==='date' && s.saleDate ? new Date(s.saleDate).getFullYear() : s.saleYear;
+  const startY = BASE_YEAR; // 価格シナリオは「現時点」(2026年)からのデータのため、これより前は描画しない
+  const endY = Math.max(startY, s.saleMode==='date' && s.saleDate ? new Date(s.saleDate).getFullYear() : s.saleYear);
   const labels = []; const data = [];
   for(let y=startY;y<=endY;y++){
     labels.push(y);
-    data.push(Math.round(priceForYear(s,y)/10000));
+    data.push(Math.round(calcAccruedGainForYear(s,y)));
   }
   chartInstance = new Chart(canvas, {
     type:'bar',
-    data:{ labels, datasets:[{ label:'想定物件価格(万円)', data, backgroundColor:'#22403A' }] },
+    data:{ labels, datasets:[{ label:'含み益(万円)', data, backgroundColor:'#22403A' }] },
     options:{
       responsive:true, maintainAspectRatio:false,
       plugins:{ legend:{ display:false } },
