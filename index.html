@@ -210,6 +210,16 @@
   table.tax-table td{ padding:7px 0; border-bottom:1px solid var(--line); }
   table.tax-table td:last-child{ text-align:right; font-weight:500; }
   .chart-wrap{ position:relative; height:220px; margin-top:6px; }
+  .yearly-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; margin-bottom:4px; }
+  table.yearly-table{ border-collapse:collapse; font-size:11px; white-space:nowrap; }
+  table.yearly-table th, table.yearly-table td{
+    padding:5px 9px; border-bottom:1px solid var(--line); text-align:right;
+  }
+  table.yearly-table th{ color:var(--ink-soft); font-weight:500; }
+  table.yearly-table th:first-child, table.yearly-table td:first-child{
+    position:sticky; left:0; background:var(--panel); text-align:left;
+    border-right:1px solid var(--line); z-index:1;
+  }
   .note-box{
     background:var(--danger-soft); border:1px solid #E4C4BA; border-radius:8px;
     padding:12px; font-size:11.5px; color:#6B2E20; line-height:1.6; margin-top:14px;
@@ -326,7 +336,7 @@ const DIRECTIONS = ["北","北東","東","南東","南","南西","西","北西"]
 const defaultState = {
   step:1,
   propertyName:"", buildingName:"", floorNumber:null, roomNumber:"", direction:"南", isCornerUnit:false,
-  contractDate:"", totalPrice:23000, floorArea:71.37, structure:"RC造",
+  contractDate:"", totalPrice:23000, currentPrice:null, floorArea:71.37, structure:"RC造",
   buildType:"新築", completionDate:"", initialUse:"自宅用", planToMove:"予定なし",
   expenseRate:2.69, expenseAmount:null,
   allocMethod:"contract", contractLandPrice:null, contractBuildingPrice:null,
@@ -452,21 +462,32 @@ function getYearUsage(s, year){
 }
 
 function priceForYear(s, year){
-  const basePrice = Number(s.totalPrice)||0;
+  const purchasePrice = Number(s.totalPrice)||0;
+  const currentBase = s.currentPrice ? Number(s.currentPrice) : purchasePrice; // 未入力なら購入価格をそのまま現在価格とみなす
+  const purchaseYear = s.contractDate ? new Date(s.contractDate).getFullYear() : BASE_YEAR;
   const targetSaleYear = s.saleMode==='date' && s.saleDate ? new Date(s.saleDate).getFullYear() : s.saleYear;
 
+  // 購入年 〜 現時点(BASE_YEAR)の間は、購入価格から現在価格まで複利で補間する
+  if(year <= BASE_YEAR){
+    const span = Math.max(BASE_YEAR - purchaseYear, 1);
+    if(purchaseYear >= BASE_YEAR){ return currentBase; }
+    const cagr = Math.pow(currentBase / purchasePrice, 1/span) - 1;
+    const yearsFromPurchase = Math.max(year - purchaseYear, 0);
+    return purchasePrice * Math.pow(1+cagr, yearsFromPurchase);
+  }
+
   if(s.priceInputMode==="futurePrice" && s.futurePrice){
-    // 将来の売却価格から逆算した年平均成長率(CAGR)を、現時点(BASE_YEAR)から売却年まで一律に適用する
+    // 将来の売却価格から逆算した年平均成長率(CAGR)を、現時点(BASE_YEAR、currentBaseが基準)から売却年まで一律に適用する
     const span = Math.max(targetSaleYear - BASE_YEAR, 1);
-    const cagr = Math.pow(Number(s.futurePrice) / basePrice, 1/span) - 1;
+    const cagr = Math.pow(Number(s.futurePrice) / currentBase, 1/span) - 1;
     const yearsFromBase = Math.max(year - BASE_YEAR, 0);
-    return basePrice * Math.pow(1+cagr, yearsFromBase);
+    return currentBase * Math.pow(1+cagr, yearsFromBase);
   }
 
   const idx = year - BASE_YEAR;
   const rates = PRICE_SCENARIOS[s.scenario].rates;
   const clampedIdx = Math.max(0, Math.min(idx, rates.length-1));
-  return basePrice * rates[clampedIdx];
+  return currentBase * rates[clampedIdx];
 }
 
 function runFullCalculation(s){
@@ -751,9 +772,12 @@ function renderStep1(){
   p1.appendChild(el('h2',{},'物件の基本情報'));
   p1.appendChild(field('契約日(購入日)', bindInput(el('input',{type:'date'}),'contractDate')));
   const row1 = el('div',{class:'row2'});
-  row1.appendChild(field('物件価格(万円)', bindInput(el('input',{type:'number'}),'totalPrice',true)));
+  row1.appendChild(field('購入価格(万円)', bindInput(el('input',{type:'number'}),'totalPrice',true)));
   row1.appendChild(field('専有面積(㎡)', bindInput(el('input',{type:'number', step:'0.01'}),'floorArea',true)));
   p1.appendChild(row1);
+  p1.appendChild(field('現在(2026年)の想定価格(万円・任意)',
+    bindInput(el('input',{type:'number'}),'currentPrice',true),
+    '空欄の場合は購入価格をそのまま現在価格として計算します。購入から時間が経って値上がり・値下がりしている場合は、この欄に現在の市場価格を入れてください。'));
   p1.appendChild(field('建物構造', bindSelect(el('select'),'structure',STRUCTURES)));
   const row2 = el('div',{class:'row2'});
   row2.appendChild(field('新築・中古', bindSelect(el('select'),'buildType',['新築','中古'])));
@@ -1111,6 +1135,13 @@ function renderStep6(){
     p3.appendChild(chartWrap);
     wrap.appendChild(p3);
     setTimeout(()=>drawChart(canvas, state), 0);
+
+    const p4 = el('div',{class:'panel'});
+    p4.appendChild(el('h2',{},'年別詳細シミュレーション(購入年から35年)'));
+    p4.appendChild(el('p',{style:'font-size:11.5px;color:var(--ink-soft);margin:0 0 4px;'},
+      '横にスクロールできます。売却予定年(STEP2で指定した年)以降も、その年に売却したと仮定した場合の参考値として表示しています。'));
+    p4.appendChild(renderYearlyTables(computeYearlyTable(state)));
+    wrap.appendChild(p4);
   }
 
   const note = el('div',{class:'note-box'});
@@ -1127,9 +1158,149 @@ function calcAccruedGainForYear(s, year){
   return price - Number(s.totalPrice) - purchaseExpenseTotal - saleExpenseAtYear;
 }
 
+/* 減価償却の年次積み上げをあらかじめ1回のループで計算(年別表・通常計算の両方から再利用) */
+function computeDepreciationSeries(s, maxYearExclusive){
+  const alloc = determineBuildingPrice(s);
+  const expenseTotal = s.expenseAmount ? Number(s.expenseAmount) : Number(s.totalPrice)*Number(s.expenseRate)/100;
+  const expAlloc = allocateExpenses(expenseTotal, alloc.building, Number(s.totalPrice));
+  const buildingAcqCost = alloc.building + expAlloc.buildingExpenses;
+  const landAcqCost = alloc.land + expAlloc.landExpenses;
+  const purchaseElapsedAtBuy = calcElapsedYears(s.completionDate, s.contractDate);
+  const purchaseYear = s.contractDate ? new Date(s.contractDate).getFullYear() : BASE_YEAR;
+
+  let cumulative = 0;
+  const series = {};
+  for(let y=purchaseYear; y<maxYearExclusive; y++){
+    const usage = getYearUsage(s, y);
+    const rate = getDepreciationRateForYear(s, usage, alloc.building, purchaseElapsedAtBuy);
+    series[y] = { cumulativeBefore: cumulative, rate };
+    const annual = Math.min(buildingAcqCost*0.9*rate, buildingAcqCost*0.95 - cumulative);
+    cumulative += Math.max(annual,0);
+  }
+  series[maxYearExclusive] = { cumulativeBefore: cumulative, rate: null };
+  return { series, buildingAcqCost, landAcqCost, alloc };
+}
+
+/* スプレッドシートと同じ形式の年別詳細表(購入年から35年分) */
+function computeYearlyTable(s){
+  const purchaseYear = s.contractDate ? new Date(s.contractDate).getFullYear() : BASE_YEAR;
+  const endYear = purchaseYear + 35;
+  const dep = computeDepreciationSeries(s, endYear+1);
+  const tsubo = Number(s.floorArea)>0 ? Number(s.floorArea)/3.30578 : 0;
+  const purchasePrice = Number(s.totalPrice)||0;
+  const purchaseExpenseTotal = s.expenseAmount ? Number(s.expenseAmount) : purchasePrice*Number(s.expenseRate)/100;
+  const contractD = s.contractDate ? new Date(s.contractDate) : new Date(`${purchaseYear}-01-01`);
+
+  const rows = [];
+  let prevPrice = null;
+  for(let y=purchaseYear; y<=endYear; y++){
+    const price = priceForYear(s,y);
+    const pricePerTsubo = tsubo>0 ? price/tsubo : 0;
+    const growthRateYoY = prevPrice ? (price/prevPrice - 1) : null;
+    const priceChange = price - purchasePrice;
+    const priceChangeRate = purchasePrice ? priceChange/purchasePrice : 0;
+    const priceChangePerTsubo = tsubo>0 ? priceChange/tsubo : 0;
+    const accruedGain = calcAccruedGainForYear(s,y);
+
+    const expenseThisYear = y===purchaseYear ? purchaseExpenseTotal : price*Number(s.brokerageFeeRate)/100;
+    const expenseRateDisplay = y===purchaseYear ? Number(s.expenseRate) : Number(s.brokerageFeeRate);
+    const buildingExpensePortion = purchasePrice ? expenseThisYear*(dep.alloc.building/purchasePrice) : 0;
+
+    const anniversary = new Date(contractD.getTime());
+    anniversary.setFullYear(y);
+    const realDays = Math.max(Math.round((anniversary - contractD)/86400000), 0);
+    const realYears = realDays/365.25;
+    const jan1 = new Date(`${y}-01-01`);
+    const taxDays = Math.max(Math.round((jan1 - contractD)/86400000), 0);
+    const taxYears = Math.floor(taxDays/365.25);
+    const classification = taxYears>=5 ? '長期' : '短期';
+
+    const cumulativeDep = dep.series[y] ? dep.series[y].cumulativeBefore : 0;
+    const rateUsed = dep.series[y] ? dep.series[y].rate : 0;
+    const acquisitionCost = (dep.buildingAcqCost - cumulativeDep) + dep.landAcqCost;
+    const taxableGainRaw = price - acquisitionCost - expenseThisYear;
+    const exemption3000 = Math.min(Math.max(taxableGainRaw,0), 3000);
+    const taxableAfter3000 = Math.max(taxableGainRaw - 3000, 0);
+    const taxDetail = computeTaxDetail(taxableAfter3000, taxYears);
+    const netProfit = price - expenseThisYear - taxDetail.total;
+
+    rows.push({
+      year:y, price, pricePerTsubo, growthRateYoY, priceChange, priceChangeRate, priceChangePerTsubo,
+      accruedGain, expenseThisYear, expenseRateDisplay, buildingExpensePortion, buildingPrice: dep.alloc.building,
+      realYears, realDays, taxYears, taxDays, classification,
+      depreciationYearsUsed: y-purchaseYear, rateUsed: rateUsed||0, cumulativeDep, acquisitionCost,
+      taxableGainRaw, exemption3000, taxableAfter3000,
+      taxTotal: taxDetail.total, taxIncome: taxDetail.income, taxResident: taxDetail.resident,
+      netProfit
+    });
+    prevPrice = price;
+  }
+  return rows;
+}
+
+function renderYearlyTables(rows){
+  const frag = document.createDocumentFragment();
+
+  const groups = [
+    { title:'物件価格・含み益', metrics:[
+      ['物件価格', r=>man(r.price)],
+      ['坪単価', r=>man(r.pricePerTsubo)],
+      ['価格上昇率(対前年)', r=> r.growthRateYoY===null?'-':(r.growthRateYoY*100).toFixed(1)+'%'],
+      ['価格変動幅(購入価格比)', r=>man(r.priceChange)],
+      ['価格変動率', r=>(r.priceChangeRate*100).toFixed(0)+'%'],
+      ['売買価格差坪単価', r=>man(r.priceChangePerTsubo)],
+      ['含み益', r=>man(r.accruedGain)],
+      ['諸経費(購入時/売却時)', r=>man(r.expenseThisYear)],
+      ['経費率', r=>r.expenseRateDisplay.toFixed(2)+'%'],
+      ['うち建物分', r=>man(r.buildingExpensePortion)],
+      ['建物価格', r=>man(r.buildingPrice)]
+    ]},
+    { title:'課税対象額の計算', metrics:[
+      ['所有期間(実質・年)', r=>r.realYears.toFixed(1)],
+      ['所有期間(実質・日)', r=>r.realDays.toLocaleString()],
+      ['譲渡課税上の所有期間(年)', r=>r.taxYears],
+      ['譲渡課税上の所有期間(日)', r=>r.taxDays.toLocaleString()],
+      ['譲渡所得課税分類', r=>r.classification],
+      ['減価償却年数', r=>r.depreciationYearsUsed],
+      ['減価償却率 r', r=>r.rateUsed.toFixed(5)],
+      ['減価償却費(累計)', r=>man(r.cumulativeDep)],
+      ['取得費', r=>man(r.acquisitionCost)],
+      ['譲渡所得', r=>man(r.taxableGainRaw)],
+      ['3,000万円特別控除分', r=>man(r.exemption3000)],
+      ['通常課税分', r=>man(r.taxableAfter3000)]
+    ]},
+    { title:'課税額・売却益', metrics:[
+      ['課税額合計', r=>man(r.taxTotal)],
+      ['　うち所得税', r=>man(r.taxIncome)],
+      ['　うち住民税', r=>man(r.taxResident)],
+      ['売却益(課税後)', r=>man(r.netProfit)]
+    ]}
+  ];
+
+  groups.forEach(g=>{
+    frag.appendChild(el('h3',{style:'font-size:13px;margin:16px 0 6px;color:var(--navy-deep);'}, g.title));
+    const wrap = el('div',{class:'yearly-wrap'});
+    const table = el('table',{class:'yearly-table'});
+    const headRow = document.createElement('tr');
+    headRow.appendChild(el('th',{}, ''));
+    rows.forEach(r=> headRow.appendChild(el('th',{}, String(r.year))));
+    table.appendChild(headRow);
+    g.metrics.forEach(([label, fn])=>{
+      const tr = document.createElement('tr');
+      tr.appendChild(el('td',{}, label));
+      rows.forEach(r=> tr.appendChild(el('td',{}, String(fn(r)))));
+      table.appendChild(tr);
+    });
+    wrap.appendChild(table);
+    frag.appendChild(wrap);
+  });
+
+  return frag;
+}
+
 function drawChart(canvas, s){
   if(chartInstance) chartInstance.destroy();
-  const startY = BASE_YEAR; // 価格シナリオは「現時点」(2026年)からのデータのため、これより前は描画しない
+  const startY = s.contractDate ? new Date(s.contractDate).getFullYear() : BASE_YEAR;
   const endY = Math.max(startY, s.saleMode==='date' && s.saleDate ? new Date(s.saleDate).getFullYear() : s.saleYear);
   const labels = []; const data = [];
   for(let y=startY;y<=endY;y++){
