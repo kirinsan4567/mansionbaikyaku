@@ -336,7 +336,7 @@ const DIRECTIONS = ["北","北東","東","南東","南","南西","西","北西"]
 const defaultState = {
   step:1,
   propertyName:"", buildingName:"", floorNumber:null, roomNumber:"", direction:"南", isCornerUnit:false,
-  contractDate:"", totalPrice:23000, currentPrice:null, floorArea:71.37, structure:"RC造",
+  contractDate:"", totalPrice:23000, currentPrice:null, historicalPrices:{}, floorArea:71.37, structure:"RC造",
   buildType:"新築", completionDate:"", initialUse:"自宅用", planToMove:"予定なし",
   expenseRate:2.69, expenseAmount:null,
   allocMethod:"contract", contractLandPrice:null, contractBuildingPrice:null,
@@ -467,13 +467,29 @@ function priceForYear(s, year){
   const purchaseYear = s.contractDate ? new Date(s.contractDate).getFullYear() : BASE_YEAR;
   const targetSaleYear = s.saleMode==='date' && s.saleDate ? new Date(s.saleDate).getFullYear() : s.saleYear;
 
-  // 購入年 〜 現時点(BASE_YEAR)の間は、購入価格から現在価格まで複利で補間する
+  // 実測価格が入力されている年は、それを最優先で使う
+  if(s.historicalPrices && s.historicalPrices[year]){
+    return Number(s.historicalPrices[year]);
+  }
+
+  // 購入年 〜 現時点(BASE_YEAR)の間は、実測値があればその間を、なければ購入価格〜現在価格を複利で補間する
   if(year <= BASE_YEAR){
-    const span = Math.max(BASE_YEAR - purchaseYear, 1);
-    if(purchaseYear >= BASE_YEAR){ return currentBase; }
-    const cagr = Math.pow(currentBase / purchasePrice, 1/span) - 1;
-    const yearsFromPurchase = Math.max(year - purchaseYear, 0);
-    return purchasePrice * Math.pow(1+cagr, yearsFromPurchase);
+    if(year <= purchaseYear) return purchasePrice;
+    if(purchaseYear >= BASE_YEAR) return currentBase;
+    // 入力済みの実測値のうち、この年を挟む直近の前後の点を探して補間する
+    let loYear = purchaseYear, loPrice = purchasePrice;
+    let hiYear = BASE_YEAR, hiPrice = currentBase;
+    if(s.historicalPrices){
+      Object.keys(s.historicalPrices).forEach(k=>{
+        const ky = Number(k), kp = Number(s.historicalPrices[k]);
+        if(!kp) return;
+        if(ky < year && ky > loYear){ loYear = ky; loPrice = kp; }
+        if(ky > year && ky < hiYear){ hiYear = ky; hiPrice = kp; }
+      });
+    }
+    const span = Math.max(hiYear - loYear, 1);
+    const cagr = Math.pow(hiPrice/loPrice, 1/span) - 1;
+    return loPrice * Math.pow(1+cagr, year - loYear);
   }
 
   if(s.priceInputMode==="futurePrice" && s.futurePrice){
@@ -778,6 +794,28 @@ function renderStep1(){
   p1.appendChild(field('現在(2026年)の想定価格(万円・任意)',
     bindInput(el('input',{type:'number'}),'currentPrice',true),
     '空欄の場合は購入価格をそのまま現在価格として計算します。購入から時間が経って値上がり・値下がりしている場合は、この欄に現在の市場価格を入れてください。'));
+
+  // 過去の実測価格(購入翌年〜昨年)
+  const purchaseY = state.contractDate ? new Date(state.contractDate).getFullYear() : null;
+  if(purchaseY && purchaseY < BASE_YEAR - 1){
+    const histWrap = el('div',{class:'field'});
+    histWrap.appendChild(el('label',{},'過去の物件価格(実測・任意)'));
+    histWrap.appendChild(el('div',{class:'hint', style:'margin-bottom:6px;'},'実際の相場価格が分かる年があれば入力してください。未入力の年は前後から自動補間します。'));
+    for(let y=purchaseY+1; y<BASE_YEAR; y++){
+      const row = el('div',{style:'display:flex;align-items:center;gap:8px;margin-bottom:6px;'});
+      row.appendChild(el('span',{style:'font-size:13px;color:var(--ink-soft);min-width:52px;'},`${y}年`));
+      const inp = el('input',{type:'number', placeholder:'万円'});
+      inp.value = state.historicalPrices[y] ?? "";
+      inp.addEventListener('input', ()=>{
+        if(inp.value===""){ delete state.historicalPrices[y]; }
+        else{ state.historicalPrices[y] = Number(inp.value); }
+        saveState();
+      });
+      row.appendChild(inp);
+      histWrap.appendChild(row);
+    }
+    p1.appendChild(histWrap);
+  }
   p1.appendChild(field('建物構造', bindSelect(el('select'),'structure',STRUCTURES)));
   const row2 = el('div',{class:'row2'});
   row2.appendChild(field('新築・中古', bindSelect(el('select'),'buildType',['新築','中古'])));
@@ -1128,7 +1166,7 @@ function renderStep6(){
     wrap.appendChild(p2b);
 
     const p3 = el('div',{class:'panel'});
-    p3.appendChild(el('h2',{},'含み益の推移(概算)'));
+    p3.appendChild(el('h2',{},'売却益推定チャート'));
     const chartWrap = el('div',{class:'chart-wrap'});
     const canvas = el('canvas');
     chartWrap.appendChild(canvas);
@@ -1300,20 +1338,40 @@ function renderYearlyTables(rows){
 
 function drawChart(canvas, s){
   if(chartInstance) chartInstance.destroy();
-  const startY = s.contractDate ? new Date(s.contractDate).getFullYear() : BASE_YEAR;
-  const endY = Math.max(startY, s.saleMode==='date' && s.saleDate ? new Date(s.saleDate).getFullYear() : s.saleYear);
-  const labels = []; const data = [];
-  for(let y=startY;y<=endY;y++){
-    labels.push(y);
-    data.push(Math.round(calcAccruedGainForYear(s,y)));
-  }
+  const rows = computeYearlyTable(s);
+  // 表と同じ年並びで描画(グラフと表の位置を揃える)。表示は最大でBASE_YEAR+15年までに絞る(視認性のため)
+  const maxChartYear = BASE_YEAR + 15;
+  const visible = rows.filter(r=> r.year <= maxChartYear);
+
+  const labels = visible.map(r=>r.year);
+  const netProfit = visible.map(r=>Math.round(r.netProfit));      // 売却益(課税後の手取り)
+  const priceDiff = visible.map(r=>Math.round(r.priceChange));     // 売買価格差
+  const accrued  = visible.map(r=>Math.round(r.accruedGain));      // 含み益
+
   chartInstance = new Chart(canvas, {
-    type:'bar',
-    data:{ labels, datasets:[{ label:'含み益(万円)', data, backgroundColor:'#22403A' }] },
+    data:{
+      labels,
+      datasets:[
+        {
+          type:'bar', label:'売却益(課税後)', data:netProfit,
+          backgroundColor:'#E8B4B0', order:3
+        },
+        {
+          type:'line', label:'売買価格差', data:priceDiff,
+          borderColor:'#8B1E1E', backgroundColor:'#8B1E1E',
+          borderWidth:2, pointRadius:0, tension:0.2, order:1
+        },
+        {
+          type:'line', label:'含み益', data:accrued,
+          borderColor:'#8B1E1E', backgroundColor:'#8B1E1E',
+          borderDash:[4,4], borderWidth:2, pointRadius:0, tension:0.2, order:2
+        }
+      ]
+    },
     options:{
       responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ display:false } },
-      scales:{ y:{ beginAtZero:false, ticks:{ font:{size:10} } }, x:{ ticks:{ font:{size:10} } } }
+      plugins:{ legend:{ display:true, position:'top', labels:{ font:{size:10}, boxWidth:18 } } },
+      scales:{ y:{ beginAtZero:true, ticks:{ font:{size:10} } }, x:{ ticks:{ font:{size:10} } } }
     }
   });
 }
