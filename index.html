@@ -452,13 +452,20 @@ function getYearUsage(s, year){
 }
 
 function priceForYear(s, year){
+  const basePrice = Number(s.totalPrice)||0;
+  const targetSaleYear = s.saleMode==='date' && s.saleDate ? new Date(s.saleDate).getFullYear() : s.saleYear;
+
+  if(s.priceInputMode==="futurePrice" && s.futurePrice){
+    // 将来の売却価格から逆算した年平均成長率(CAGR)を、現時点(BASE_YEAR)から売却年まで一律に適用する
+    const span = Math.max(targetSaleYear - BASE_YEAR, 1);
+    const cagr = Math.pow(Number(s.futurePrice) / basePrice, 1/span) - 1;
+    const yearsFromBase = Math.max(year - BASE_YEAR, 0);
+    return basePrice * Math.pow(1+cagr, yearsFromBase);
+  }
+
   const idx = year - BASE_YEAR;
   const rates = PRICE_SCENARIOS[s.scenario].rates;
   const clampedIdx = Math.max(0, Math.min(idx, rates.length-1));
-  const basePrice = Number(s.totalPrice)||0;
-  if(s.priceInputMode==="futurePrice" && s.futurePrice && year===s.saleYear){
-    return Number(s.futurePrice);
-  }
   return basePrice * rates[clampedIdx];
 }
 
