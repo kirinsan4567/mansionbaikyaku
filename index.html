@@ -40,15 +40,17 @@
 
   header.appbar{
     position:fixed; top:0; left:0; right:0; height:var(--header-h);
-    background:var(--green-dark); color:#fff;
+    background:#FFFFFF; color:var(--green-dark);
     display:flex; align-items:center; gap:10px;
     padding:0 16px; z-index:100;
-    box-shadow:0 1px 4px rgba(0,0,0,0.2);
+    box-shadow:0 1px 4px rgba(0,0,0,0.1);
+    border-bottom:1px solid var(--line);
   }
-  header.appbar .title{ font-size:14.5px; font-weight:700; white-space:nowrap; }
-  header.appbar .sep{ color:rgba(255,255,255,0.4); }
+  header.appbar .logo{ width:26px; height:26px; flex-shrink:0; }
+  header.appbar .title{ font-size:14.5px; font-weight:700; white-space:nowrap; color:var(--green-dark); }
+  header.appbar .sep{ color:#B8B6AE; }
   header.appbar .prop-summary{
-    font-size:12px; color:#CFE8DF; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    font-size:12px; color:#5B6660; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
     flex:1;
   }
 
@@ -76,14 +78,21 @@
   .panel{
     background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
     margin-bottom:12px; overflow:hidden;
+    box-shadow:0 1px 3px rgba(20,50,45,0.06);
   }
   .panel-head{
     display:flex; align-items:center; justify-content:space-between;
-    padding:12px 14px; cursor:pointer; user-select:none;
-    border-bottom:2px solid var(--green);
+    padding:11px 14px; cursor:pointer; user-select:none;
+    background:linear-gradient(to right, var(--green-pale), #EEF6F2);
+    border-bottom:1px solid #CFE6DC;
   }
-  .panel-head h2{ font-size:14px; font-weight:700; margin:0; }
-  .panel-head .chevron{ font-size:11px; color:var(--ink-soft); }
+  .panel-head .title-wrap{ display:flex; align-items:center; gap:8px; }
+  .panel-head .diamond{
+    width:9px; height:9px; background:var(--green); flex-shrink:0;
+    transform:rotate(45deg); border-radius:1px;
+  }
+  .panel-head h2{ font-size:14px; font-weight:700; margin:0; color:var(--green-dark); }
+  .panel-head .chevron{ font-size:11px; color:var(--green); }
   .panel-body{ padding:14px; }
   .panel h3.sub{ font-size:12.5px; margin:14px 0 6px; color:var(--green-dark); }
   .field{ margin-bottom:12px; }
@@ -149,13 +158,17 @@
   table.tax-table{ width:100%; border-collapse:collapse; font-size:13px; }
   table.tax-table td{ padding:6px 0; border-bottom:1px solid var(--line); }
   table.tax-table td:last-child{ text-align:right; font-weight:500; }
+  .tax-cols{ display:block; }
+  @media (min-width:900px){
+    .tax-cols{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  }
   .chart-wrap{ position:relative; height:300px; margin-top:6px; }
   .note-box{ background:var(--danger-soft); border:1px solid #E4C4BA; border-radius:6px; padding:12px; font-size:11.5px; color:#6B2E20; line-height:1.6; margin-top:12px; }
 
   .yearly-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid var(--line); border-radius:6px; }
   table.yearly-table{ border-collapse:collapse; font-size:11px; white-space:nowrap; width:100%; }
   table.yearly-table th, table.yearly-table td{
-    padding:5px 8px; border-bottom:1px solid var(--line); text-align:right; width:64px; min-width:64px;
+    padding:5px 8px; border:1px solid var(--line); text-align:right; width:64px; min-width:64px;
   }
   table.yearly-table th{ color:var(--ink-soft); font-weight:500; background:var(--green-pale); }
   table.yearly-table td.indent{ padding-left:16px; }
@@ -164,8 +177,10 @@
     border-right:2px solid var(--line); z-index:1;
   }
   table.yearly-table th:first-child{ background:#E4E3DC; }
-  table.yearly-table tr.group-title td{ background:#EDECE6; font-weight:700; color:var(--green-dark); }
-  td[data-year].hl-year, th[data-year].hl-year{ background:var(--green-pale) !important; }
+  table.yearly-table tr.group-head-row td{ background:var(--green-pale); font-weight:700; color:var(--green-dark); }
+  table.yearly-table tr.group-head-row td.group-label{ background:#CFE6DC; }
+  td[data-year].hl-year, th[data-year].hl-year{ background:#B9DED1 !important; }
+  td[data-year].sale-year-col, th[data-year].sale-year-col{ box-shadow: inset 0 0 0 2px var(--green-dark); }
 
   .placeholder-msg{ padding:32px 16px; text-align:center; color:var(--ink-soft); font-size:13px; border:1px dashed var(--line); border-radius:var(--radius); background:#FDFDFC; }
 </style>
@@ -173,6 +188,12 @@
 <body>
 
 <header class="appbar">
+  <svg class="logo" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <polygon points="20,20 20,3 35,20" fill="#8FC7B4"/>
+    <polygon points="20,20 35,20 20,37" fill="#147B58"/>
+    <polygon points="20,20 20,37 5,20" fill="#0D5A40"/>
+    <polygon points="20,20 5,20 20,3" fill="#0A2E24"/>
+  </svg>
   <span class="title">不動産売却益計算シミュレーション</span>
   <span class="sep" id="headerSep" style="display:none;">|</span>
   <span class="prop-summary" id="propSummary"></span>
@@ -706,7 +727,10 @@ function isPC(){ return window.matchMedia('(min-width:900px)').matches; }
 function makePanel(title){
   const panel = el('div',{class:'panel'});
   const head = el('div',{class:'panel-head'});
-  head.appendChild(el('h2',{},title));
+  const titleWrap = el('div',{class:'title-wrap'});
+  titleWrap.appendChild(el('span',{class:'diamond'}));
+  titleWrap.appendChild(el('h2',{},title));
+  head.appendChild(titleWrap);
   const chevron = el('span',{class:'chevron'}, collapsedPanels[title] ? '▸' : '▾');
   head.appendChild(chevron);
   const body = el('div',{class:'panel-body'});
@@ -923,14 +947,14 @@ function buildPricePanel(){
     priceInput.setAttribute('placeholder', placeholderPrice);
     if(y===BASE_YEAR){
       priceInput.value = state.currentPrice ? formatComma(state.currentPrice) : '';
-      priceInput.addEventListener('input', ()=>{
+      priceInput.addEventListener('change', ()=>{
         const raw = priceInput.value.replace(/[^0-9.\-]/g,'');
         state.currentPrice = raw===''?null:Number(raw);
         saveState(); renderSettings();
       });
     } else {
       priceInput.value = state.yearlyPriceOverrides[y] ? formatComma(state.yearlyPriceOverrides[y]) : '';
-      priceInput.addEventListener('input', ()=>{
+      priceInput.addEventListener('change', ()=>{
         const raw = priceInput.value.replace(/[^0-9.\-]/g,'');
         if(raw===''){ delete state.yearlyPriceOverrides[y]; }
         else{ state.yearlyPriceOverrides[y] = Number(raw); delete state.yearlyRateOverrides[y]; }
@@ -946,7 +970,7 @@ function buildPricePanel(){
       const impliedRate = (series[y]/series[y-1]-1)*100;
       rateInput.setAttribute('placeholder', impliedRate.toFixed(1));
       rateInput.value = state.yearlyRateOverrides[y]!==undefined ? state.yearlyRateOverrides[y] : '';
-      rateInput.addEventListener('input', ()=>{
+      rateInput.addEventListener('change', ()=>{
         const raw = rateInput.value.replace(/[^0-9.\-]/g,'');
         if(raw===''){ delete state.yearlyRateOverrides[y]; }
         else{ state.yearlyRateOverrides[y] = Number(raw); delete state.yearlyPriceOverrides[y]; }
@@ -1085,8 +1109,10 @@ function buildResults(){
     wrap.appendChild(lockp);
   } else {
     const { panel:p2, body:b2 } = makePanel('税額内訳');
-    const table = el('table',{class:'tax-table'});
-    const rows = [
+    const colsWrap = el('div',{class:'tax-cols'});
+
+    const tableL = el('table',{class:'tax-table'});
+    const rowsL = [
       ['譲渡価格', man(result.salePrice)],
       ['取得費', man(result.acquisitionCost)],
       ['譲渡諸経費', man(result.saleExpense)],
@@ -1094,19 +1120,32 @@ function buildResults(){
       ['保有期間', `${result.holdingYears}年(${result.isLongTerm?'長期譲渡':'短期譲渡'})`],
       ['税額(特例なし)合計', man(result.detailNoException.total)],
       ['　うち所得税(復興税込)', man(result.detailNoException.income)],
-      ['　うち住民税', man(result.detailNoException.resident)],
+      ['　うち住民税', man(result.detailNoException.resident)]
+    ];
+    rowsL.forEach(([k,v])=>{
+      const tr = document.createElement('tr');
+      tr.appendChild(el('td',{},k));
+      tr.appendChild(el('td',{},v));
+      tableL.appendChild(tr);
+    });
+
+    const tableR = el('table',{class:'tax-table'});
+    const rowsR = [
       ['税額(3,000万円控除適用)合計', man(result.detail3000.total)],
       ['　うち所得税(復興税込)', man(result.detail3000.income)],
       ['　うち住民税', man(result.detail3000.resident)],
       ['税額(買換え特例=課税繰延)', man(result.detailDeferred.total)]
     ];
-    rows.forEach(([k,v])=>{
+    rowsR.forEach(([k,v])=>{
       const tr = document.createElement('tr');
       tr.appendChild(el('td',{},k));
       tr.appendChild(el('td',{},v));
-      table.appendChild(tr);
+      tableR.appendChild(tr);
     });
-    b2.appendChild(table);
+
+    colsWrap.appendChild(tableL);
+    colsWrap.appendChild(tableR);
+    b2.appendChild(colsWrap);
     wrap.appendChild(p2);
 
     const { panel:p2b, body:b2b } = makePanel(replacement ? '住み替え先を含めた生涯合計納税額の比較' : '買換え特例を選んだ場合の将来影響(参考)');
@@ -1150,7 +1189,7 @@ function buildResults(){
     const { panel:p4, body:b4 } = makePanel('年別詳細シミュレーション(購入年から35年)');
     b4.appendChild(el('p',{style:'font-size:11.5px;color:var(--ink-soft);margin:0 0 4px;'},
       '横にスクロールできます。年にカーソルを合わせると、上のグラフと連動してハイライトされます。'));
-    b4.appendChild(renderYearlyTables(computeYearlyTable(state)));
+    b4.appendChild(renderYearlyTables(computeYearlyTable(state), getSaleYear(state)));
     wrap.appendChild(p4);
   }
 
@@ -1161,7 +1200,7 @@ function buildResults(){
   return wrap;
 }
 
-function renderYearlyTables(rows){
+function renderYearlyTables(rows, saleYear){
   const groups = [
     { title:'物件価格・含み益', metrics:[
       ['物件価格', r=>man(r.price)],
@@ -1201,30 +1240,30 @@ function renderYearlyTables(rows){
   const scroll = el('div',{class:'yearly-scroll'});
   const table = el('table',{class:'yearly-table'});
 
-  const headRow = document.createElement('tr');
-  headRow.appendChild(el('th',{},''));
-  rows.forEach(r=>{
-    const th = el('th',{'data-year':String(r.year)}, String(r.year));
-    th.addEventListener('mouseenter', ()=>setHighlightedYear(r.year));
-    th.addEventListener('mouseleave', ()=>setHighlightedYear(null));
-    headRow.appendChild(th);
-  });
-  table.appendChild(headRow);
+  function makeYearCell(tag, r, extraClass){
+    const attrs = {'data-year':String(r.year)};
+    if(extraClass) attrs.class = extraClass;
+    const cell = el(tag, attrs, String(r.year));
+    if(saleYear!==undefined && Number(r.year)===Number(saleYear)) cell.classList.add('sale-year-col');
+    cell.addEventListener('mouseenter', ()=>setHighlightedYear(r.year));
+    cell.addEventListener('mouseleave', ()=>setHighlightedYear(null));
+    return cell;
+  }
 
   groups.forEach(g=>{
-    const titleTr = el('tr',{class:'group-title'});
-    const titleTd = document.createElement('td');
-    titleTd.setAttribute('colspan', String(rows.length+1));
-    titleTd.textContent = g.title;
-    titleTr.appendChild(titleTd);
-    table.appendChild(titleTr);
+    const headRow = el('tr',{class:'group-head-row'});
+    headRow.appendChild(el('td',{class:'group-label'}, g.title));
+    rows.forEach(r=> headRow.appendChild(makeYearCell('td', r)));
+    table.appendChild(headRow);
 
     g.metrics.forEach(([label, fn, indent])=>{
       const tr = document.createElement('tr');
       tr.appendChild(el('td',{}, label));
       rows.forEach(r=>{
-        const td = el('td',{'data-year':String(r.year)}, String(fn(r)));
+        const attrs = {'data-year':String(r.year)};
+        const td = el('td', attrs, String(fn(r)));
         if(indent) td.classList.add('indent');
+        if(saleYear!==undefined && Number(r.year)===Number(saleYear)) td.classList.add('sale-year-col');
         td.addEventListener('mouseenter', ()=>setHighlightedYear(r.year));
         td.addEventListener('mouseleave', ()=>setHighlightedYear(null));
         tr.appendChild(td);
@@ -1259,6 +1298,7 @@ function drawChart(canvas, s){
   if(chartInstance) chartInstance.destroy();
   const rows = computeYearlyTable(s);
   const purchaseYear = s.contractDate ? new Date(s.contractDate).getFullYear() : BASE_YEAR;
+  const saleYear = getSaleYear(s);
   const hasHistory = (s.historicalPrices && Object.keys(s.historicalPrices).length>0) ||
     (s.currentPrice && Number(s.currentPrice)!==Number(s.totalPrice));
   const chartStartYear = hasHistory ? purchaseYear : BASE_YEAR;
@@ -1276,6 +1316,8 @@ function drawChart(canvas, s){
   const DARK_GRAY = '#8A8985';
 
   const barColors = visible.map(r=> r.year < BASE_YEAR ? (r.year===purchaseYear ? DARK_GRAY : LIGHT_GRAY) : GREEN_BAR);
+  const barBorderColors = visible.map(r=> Number(r.year)===Number(saleYear) ? '#0D5A40' : 'rgba(0,0,0,0.15)');
+  const barBorderWidths = visible.map(r=> Number(r.year)===Number(saleYear) ? 3 : 1);
 
   const hasDatalabels = !!window.ChartDataLabels;
   if(hasDatalabels && !Chart._klRegistered){ Chart.register(window.ChartDataLabels); Chart._klRegistered = true; }
@@ -1285,7 +1327,8 @@ function drawChart(canvas, s){
       labels,
       datasets:[
         {
-          type:'bar', label:'売却益(課税後)', data:netProfit, backgroundColor:barColors, order:3,
+          type:'bar', label:'売却益(課税後)', data:netProfit,
+          backgroundColor:barColors, borderColor:barBorderColors, borderWidth:barBorderWidths, order:3,
           datalabels: hasDatalabels ? {
             anchor:'center', align:'center', color:'#123', font:{size:9,weight:'bold'},
             formatter: v=> Math.round(v).toLocaleString()
@@ -1293,7 +1336,7 @@ function drawChart(canvas, s){
         },
         {
           type:'line', label:'売買価格差', data:priceDiff, borderWidth:2, pointRadius:0, tension:0.2, order:1,
-          segment:{ borderColor: ctx=>{ const yr=visible[ctx.p1.dataIndex].year; return yr<BASE_YEAR ? (yr===purchaseYear?DARK_GRAY:LIGHT_GRAY) : GREEN; } },
+          segment:{ borderColor: ctx=>{ const yr=visible[ctx.p1DataIndex].year; return yr<BASE_YEAR ? (yr===purchaseYear?DARK_GRAY:LIGHT_GRAY) : GREEN; } },
           borderColor: GREEN,
           datalabels: hasDatalabels ? {
             align:'top', color: GREEN, font:{size:9,weight:'bold'},
@@ -1302,7 +1345,7 @@ function drawChart(canvas, s){
         },
         {
           type:'line', label:'含み益', data:accrued, borderWidth:2, pointRadius:0, tension:0.2, borderDash:[4,4], order:2,
-          segment:{ borderColor: ctx=>{ const yr=visible[ctx.p1.dataIndex].year; return yr<BASE_YEAR ? (yr===purchaseYear?DARK_GRAY:LIGHT_GRAY) : GREEN; } },
+          segment:{ borderColor: ctx=>{ const yr=visible[ctx.p1DataIndex].year; return yr<BASE_YEAR ? (yr===purchaseYear?DARK_GRAY:LIGHT_GRAY) : GREEN; } },
           borderColor: GREEN,
           datalabels: { display:false }
         }
