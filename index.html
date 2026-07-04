@@ -47,6 +47,7 @@
     box-shadow:0 1px 4px rgba(0,0,0,0.1);
     border-bottom:1px solid var(--line);
   }
+  header.appbar .brand-row{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
   header.appbar .logo{ width:26px; height:26px; flex-shrink:0; }
   header.appbar .title{ font-size:14.5px; font-weight:700; white-space:nowrap; color:var(--green-dark); }
   header.appbar .sep{ color:#B8B6AE; }
@@ -56,27 +57,27 @@
   }
   header.appbar .header-actions{ display:flex; gap:6px; flex-shrink:0; }
   header.appbar .header-actions .btn{ padding:6px 9px; font-size:11.5px; }
+  header.appbar .prop-summary.mobile-only{ display:none; }
 
   @media (max-width:899px){
     header.appbar{
       height:auto; min-height:var(--header-h); flex-wrap:wrap; padding:8px 12px; row-gap:4px;
     }
-    header.appbar .prop-summary{
-      white-space:normal; flex-basis:100%; order:3; font-size:11.5px;
-    }
+    header.appbar .brand-row{ flex-basis:100%; }
+    header.appbar .brand-row .prop-summary.pc-only{ display:none !important; }
+    header.appbar .prop-summary.mobile-only{ display:block; font-size:11.5px; }
     header.appbar .sep{ display:none !important; }
   }
 
   .pc-nav{
-    position:sticky; top:var(--header-h); z-index:60; background:var(--paper);
-    display:flex; gap:8px; padding:10px 12px; max-width:1100px; margin:0 auto;
-    border-bottom:1px solid var(--line);
+    display:flex; gap:8px; padding:10px 0; flex-shrink:0; flex-wrap:wrap;
+    border-bottom:1px solid var(--line); margin-bottom:8px;
   }
   .pc-nav-btn{ background:var(--green); border-color:var(--green); color:#fff; font-weight:500; opacity:0.85; }
   .pc-nav-btn:hover{ background:var(--green-dark); opacity:1; }
 
   .results-sticky-head{
-    position:sticky; top:0; z-index:10; background:var(--paper); padding:0 0 10px;
+    flex-shrink:0; background:var(--paper); padding:0 0 10px;
   }
   .results-sticky-head .btn{ width:auto; padding:8px 20px; }
 
@@ -89,12 +90,17 @@
   }
   .site-footer .footer-brand a{ color:var(--green-dark); text-decoration:none; }
 
-  .layout{ max-width:1100px; margin:0 auto; padding:12px; }
+  .layout{ width:100%; padding:12px; }
   .settings-col, .results-col{ min-width:0; }
   @media (min-width:900px){
-    .layout{ display:grid; grid-template-columns:var(--settings-w) 1fr; gap:16px; align-items:start; }
-    .settings-col{ max-height:calc(100vh - var(--header-h) - 56px); overflow-y:auto; padding-right:4px; }
-    .results-col{ max-height:calc(100vh - var(--header-h) - 56px); overflow-y:auto; padding-right:4px; }
+    .layout{
+      display:grid; grid-template-columns:var(--settings-w) 1fr; gap:16px;
+      height:calc(100vh - var(--header-h) - 24px);
+    }
+    .settings-col{ display:flex; flex-direction:column; height:100%; overflow:hidden; }
+    .settings-scroll{ flex:1; overflow-y:auto; padding-right:4px; }
+    .results-col{ display:flex; flex-direction:column; height:100%; overflow:hidden; }
+    .results-scroll{ flex:1; overflow-y:auto; padding-right:4px; }
     .mobile-only{ display:none !important; }
   }
   @media (max-width:899px){
@@ -199,8 +205,9 @@
   table.tax-table td:last-child{ text-align:right; font-weight:500; }
   .tax-cols{ display:block; }
   @media (min-width:900px){
-    .tax-cols{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+    .tax-cols{ display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; }
   }
+  .chart-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
   .chart-wrap{ position:relative; height:300px; margin-top:6px; }
   .note-box{ background:var(--danger-soft); border:1px solid #E4C4BA; border-radius:6px; padding:12px; font-size:11.5px; color:#6B2E20; line-height:1.6; margin-top:12px; }
 
@@ -218,6 +225,10 @@
   table.yearly-table th:first-child{ background:#E4E3DC; }
   table.yearly-table tr.group-head-row td{ background:var(--green-pale); font-weight:700; color:var(--green-dark); }
   table.yearly-table tr.group-head-row td.group-label{ background:#CFE6DC; }
+  .row-toggle{
+    display:inline-block; width:14px; text-align:center; margin-right:4px; cursor:pointer;
+    color:var(--green-dark); font-weight:700; user-select:none;
+  }
   td[data-year].hl-year, th[data-year].hl-year{ background:#B9DED1 !important; }
   td[data-year].sale-year-col, th[data-year].sale-year-col{ box-shadow: inset 0 0 0 2px var(--green-dark); }
 
@@ -227,15 +238,18 @@
 <body>
 
 <header class="appbar">
-  <svg class="logo" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <polygon points="20,20 20,3 35,20" fill="#8FC7B4"/>
-    <polygon points="20,20 35,20 20,37" fill="#147B58"/>
-    <polygon points="20,20 20,37 5,20" fill="#0D5A40"/>
-    <polygon points="20,20 5,20 20,3" fill="#0A2E24"/>
-  </svg>
-  <span class="title">不動産売却益計算シミュレーション</span>
-  <span class="sep" id="headerSep" style="display:none;">|</span>
-  <span class="prop-summary" id="propSummary"></span>
+  <div class="brand-row">
+    <svg class="logo" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <polygon points="20,20 20,3 35,20" fill="#8FC7B4"/>
+      <polygon points="20,20 35,20 20,37" fill="#147B58"/>
+      <polygon points="20,20 20,37 5,20" fill="#0D5A40"/>
+      <polygon points="20,20 5,20 20,3" fill="#0A2E24"/>
+    </svg>
+    <span class="title">不動産売却益計算シミュレーション</span>
+    <span class="sep" id="headerSep" style="display:none;">|</span>
+    <span class="prop-summary pc-only" id="propSummary"></span>
+  </div>
+  <span class="prop-summary mobile-only" id="propSummaryMobile"></span>
   <div class="header-actions">
     <button class="btn small" onclick="exportData()">📁 外部保存</button>
     <label style="display:flex;">
@@ -245,24 +259,27 @@
   </div>
 </header>
 
-<div class="pc-nav pc-only" id="pcNav"></div>
-
 <div class="layout">
   <div class="settings-col" id="settingsCol">
-    <div class="stepbar mobile-only" id="stepbar"></div>
-    <div id="settingsBody"></div>
-    <div class="navrow mobile-only" id="mobileNav">
-      <button class="btn back" onclick="goStep(-1)">戻</button>
-      <button class="btn primary" id="nextBtn" onclick="goStep(1)">次へ</button>
+    <div class="pc-nav pc-only" id="pcNav"></div>
+    <div class="settings-scroll">
+      <div class="stepbar mobile-only" id="stepbar"></div>
+      <div id="settingsBody"></div>
+      <div class="navrow mobile-only" id="mobileNav">
+        <button class="btn back" onclick="goStep(-1)">戻</button>
+        <button class="btn primary" id="nextBtn" onclick="goStep(1)">次へ</button>
+      </div>
+      <button class="btn primary pc-only" style="margin-top:4px;" onclick="renderResults()">シミュレーション実行(結果を更新)</button>
     </div>
-    <button class="btn primary pc-only" style="margin-top:4px;" onclick="renderResults()">シミュレーション実行(結果を更新)</button>
   </div>
 
   <div class="results-col pc-only" id="resultsColPC">
     <div class="results-sticky-head">
       <button class="btn primary" onclick="renderResults()">シミュレーション実行(結果を更新)</button>
     </div>
-    <div id="resultsBodyPC"></div>
+    <div class="results-scroll">
+      <div id="resultsBodyPC"></div>
+    </div>
   </div>
 </div>
 
@@ -824,8 +841,12 @@ function updateHeaderSummary(){
   if(state.direction) parts.push(state.direction);
   if(state.isCornerUnit) parts.push('角');
   const text = parts.join(' ');
-  document.getElementById('propSummary').textContent = text;
-  document.getElementById('headerSep').style.display = text ? '' : 'none';
+  const elPC = document.getElementById('propSummary');
+  const elMobile = document.getElementById('propSummaryMobile');
+  if(elPC) elPC.textContent = text;
+  if(elMobile) elMobile.textContent = text;
+  const sep = document.getElementById('headerSep');
+  if(sep) sep.style.display = text ? '' : 'none';
 }
 
 /* =========================================================
@@ -1256,6 +1277,16 @@ function buildResults(){
     lb.appendChild(box);
     wrap.appendChild(lockp);
   } else {
+    const { panel:p3, body:b3 } = makePanel('売却益推定チャート');
+    const chartScroll = el('div',{class:'chart-scroll'});
+    const chartWrap = el('div',{class:'chart-wrap'});
+    const canvas = el('canvas');
+    chartWrap.appendChild(canvas);
+    chartScroll.appendChild(chartWrap);
+    b3.appendChild(chartScroll);
+    wrap.appendChild(p3);
+    setTimeout(()=>drawChart(canvas, chartWrap, state), 0);
+
     const { panel:p2, body:b2 } = makePanel('税額内訳');
     const colsWrap = el('div',{class:'tax-cols'});
 
@@ -1326,14 +1357,6 @@ function buildResults(){
     }
     wrap.appendChild(p2b);
 
-    const { panel:p3, body:b3 } = makePanel('売却益推定チャート');
-    const chartWrap = el('div',{class:'chart-wrap'});
-    const canvas = el('canvas');
-    chartWrap.appendChild(canvas);
-    b3.appendChild(chartWrap);
-    wrap.appendChild(p3);
-    setTimeout(()=>drawChart(canvas, state), 0);
-
     const { panel:p4, body:b4 } = makePanel('年別詳細シミュレーション(購入年から35年)');
     b4.appendChild(el('p',{style:'font-size:11.5px;color:var(--ink-soft);margin:0 0 4px;'},
       '横にスクロールできます。年にカーソルを合わせると、上のグラフと連動してハイライトされます。'));
@@ -1400,23 +1423,48 @@ function renderYearlyTables(rows, saleYear){
 
   groups.forEach(g=>{
     const headRow = el('tr',{class:'group-head-row'});
-    headRow.appendChild(el('td',{class:'group-label'}, g.title));
+    const groupLabelCell = el('td',{class:'group-label'});
+    const groupToggle = el('span',{class:'row-toggle'}, '－');
+    groupLabelCell.appendChild(groupToggle);
+    groupLabelCell.appendChild(document.createTextNode(g.title));
+    headRow.appendChild(groupLabelCell);
     rows.forEach(r=> headRow.appendChild(makeYearCell('td', r)));
     table.appendChild(headRow);
 
+    const metricRows = [];
     g.metrics.forEach(([label, fn, indent])=>{
       const tr = document.createElement('tr');
-      tr.appendChild(el('td',{}, label));
+      const labelCell = el('td',{});
+      const rowToggle = el('span',{class:'row-toggle'}, '－');
+      labelCell.appendChild(rowToggle);
+      labelCell.appendChild(document.createTextNode(label));
+      if(indent) labelCell.classList.add('indent');
+      tr.appendChild(labelCell);
       rows.forEach(r=>{
         const attrs = {'data-year':String(r.year)};
         const td = el('td', attrs, String(fn(r)));
-        if(indent) td.classList.add('indent');
         if(saleYear!==undefined && Number(r.year)===Number(saleYear)) td.classList.add('sale-year-col');
         td.addEventListener('mouseenter', ()=>setHighlightedYear(r.year));
         td.addEventListener('mouseleave', ()=>setHighlightedYear(null));
         tr.appendChild(td);
       });
       table.appendChild(tr);
+      metricRows.push(tr);
+
+      rowToggle.addEventListener('click', (ev)=>{
+        ev.stopPropagation();
+        const cells = Array.from(tr.querySelectorAll('td')).slice(1);
+        const collapsed = rowToggle.textContent === '＋';
+        cells.forEach(c=> c.style.visibility = collapsed ? 'visible' : 'hidden');
+        rowToggle.textContent = collapsed ? '－' : '＋';
+      });
+    });
+
+    groupToggle.addEventListener('click', (ev)=>{
+      ev.stopPropagation();
+      const collapsed = groupToggle.textContent === '＋';
+      metricRows.forEach(tr=>{ tr.style.display = collapsed ? '' : 'none'; });
+      groupToggle.textContent = collapsed ? '－' : '＋';
     });
   });
 
@@ -1465,7 +1513,7 @@ const currentYearMarkerPlugin = {
   }
 };
 
-function drawChart(canvas, s){
+function drawChart(canvas, chartWrap, s){
   if(chartInstance) chartInstance.destroy();
   const rows = computeYearlyTable(s);
   const purchaseYear = s.contractDate ? new Date(s.contractDate).getFullYear() : BASE_YEAR;
@@ -1475,6 +1523,11 @@ function drawChart(canvas, s){
   const maxChartYear = BASE_YEAR + 15;
   const visible = rows.filter(r=> r.year >= chartStartYear && r.year <= maxChartYear);
 
+  // 最低でも1本あたり44pxを確保し、それ未満になる場合は横スクロールさせる
+  const minWidth = Math.max(visible.length * 44, 480);
+  chartWrap.style.minWidth = minWidth + 'px';
+  chartWrap.style.width = '100%';
+
   const labels = visible.map(r=>r.year);
   const netProfit = visible.map(r=>Math.round(r.netProfit));
   const priceDiff = visible.map(r=>Math.round(r.priceChange));
@@ -1482,7 +1535,7 @@ function drawChart(canvas, s){
 
   const GREEN = '#147B58';
   const BAR_DEFAULT = '#CFE8DF';
-  const BAR_HIGHLIGHT = '#B9DED1';
+  const BAR_HIGHLIGHT = '#5FAF8C';
   const LIGHT_GRAY = '#D9D8D3';
 
   const barColors = visible.map(r=> r.year < BASE_YEAR ? LIGHT_GRAY : BAR_DEFAULT);
@@ -1505,7 +1558,7 @@ function drawChart(canvas, s){
           type:'bar', label:'売却益(課税後)', data:netProfit,
           backgroundColor:barColors, borderColor:barBorderColors, borderWidth:barBorderWidths, order:3,
           datalabels: hasDatalabels ? {
-            anchor:'end', align: ctx=> ctx.dataIndex%2===0 ? 'end':'start', offset:2, clamp:true,
+            anchor:'center', align:'center', clamp:true,
             color:'#12281F', font:{size:9,weight:'bold'},
             formatter: v=> Math.round(v).toLocaleString()
           } : undefined
@@ -1515,7 +1568,8 @@ function drawChart(canvas, s){
           segment:{ borderColor: ctx=>{ const yr=visible[ctx.p1DataIndex].year; return yr<BASE_YEAR ? LIGHT_GRAY : GREEN; } },
           borderColor: GREEN,
           datalabels: hasDatalabels ? {
-            align:'top', clamp:true, color: GREEN, font:{size:9,weight:'bold'},
+            align: ctx=> ctx.dataIndex%2===0 ? 'top':'bottom', offset:4, clamp:true,
+            color: GREEN, font:{size:9,weight:'bold'},
             formatter: v=> (v>=0?'+':'') + Math.round(v).toLocaleString()
           } : undefined
         },
