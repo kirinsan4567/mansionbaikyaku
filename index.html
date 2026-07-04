@@ -57,12 +57,23 @@
   header.appbar .header-actions{ display:flex; gap:6px; flex-shrink:0; }
   header.appbar .header-actions .btn{ padding:6px 9px; font-size:11.5px; }
 
-  .pc-nav{
-    position:sticky; top:0; z-index:10; background:var(--paper);
-    display:flex; gap:6px; padding:8px 0 10px; flex-wrap:wrap;
+  @media (max-width:899px){
+    header.appbar{
+      height:auto; min-height:var(--header-h); flex-wrap:wrap; padding:8px 12px; row-gap:4px;
+    }
+    header.appbar .prop-summary{
+      white-space:normal; flex-basis:100%; order:3; font-size:11.5px;
+    }
+    header.appbar .sep{ display:none !important; }
   }
-  .pc-nav-btn{ background:var(--green); border-color:var(--green); color:#fff; font-weight:500; }
-  .pc-nav-btn:hover{ background:var(--green-dark); }
+
+  .pc-nav{
+    position:sticky; top:var(--header-h); z-index:60; background:var(--paper);
+    display:flex; gap:8px; padding:10px 12px; max-width:1100px; margin:0 auto;
+    border-bottom:1px solid var(--line);
+  }
+  .pc-nav-btn{ background:var(--green); border-color:var(--green); color:#fff; font-weight:500; opacity:0.85; }
+  .pc-nav-btn:hover{ background:var(--green-dark); opacity:1; }
 
   .results-sticky-head{
     position:sticky; top:0; z-index:10; background:var(--paper); padding:0 0 10px;
@@ -78,26 +89,30 @@
   }
   .site-footer .footer-brand a{ color:var(--green-dark); text-decoration:none; }
 
-  .layout{ max-width:1280px; margin:0 auto; padding:12px; }
+  .layout{ max-width:1100px; margin:0 auto; padding:12px; }
   .settings-col, .results-col{ min-width:0; }
   @media (min-width:900px){
     .layout{ display:grid; grid-template-columns:var(--settings-w) 1fr; gap:16px; align-items:start; }
-    .settings-col{ max-height:calc(100vh - var(--header-h) - 24px); overflow-y:auto; padding-right:4px; }
-    .results-col{ max-height:calc(100vh - var(--header-h) - 24px); overflow-y:auto; padding-right:4px; }
+    .settings-col{ max-height:calc(100vh - var(--header-h) - 56px); overflow-y:auto; padding-right:4px; }
+    .results-col{ max-height:calc(100vh - var(--header-h) - 56px); overflow-y:auto; padding-right:4px; }
     .mobile-only{ display:none !important; }
   }
   @media (max-width:899px){
     .pc-only{ display:none !important; }
   }
 
-  .stepbar{ display:flex; gap:4px; margin-bottom:10px; }
+  .stepbar{
+    display:flex; gap:4px; margin:0 0 10px;
+    position:sticky; top:var(--header-h); z-index:50;
+    background:var(--paper); padding:8px 0;
+  }
   .stepbar button{
     flex:1; padding:8px 2px; font-size:11px; font-family:inherit;
-    border:1px solid var(--line); background:#fff; color:var(--ink-soft);
-    border-radius:6px; cursor:pointer;
+    border:1px solid var(--green); background:var(--green); color:#fff;
+    border-radius:6px; cursor:pointer; opacity:0.55;
   }
-  .stepbar button.active{ background:var(--green); border-color:var(--green); color:#fff; font-weight:700; }
-  .stepbar button.done{ border-color:var(--green); color:var(--green); }
+  .stepbar button.active{ opacity:1; font-weight:700; box-shadow:0 0 0 2px rgba(13,90,64,0.35); }
+  .stepbar button.done{ opacity:0.85; }
 
   .panel{
     background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
@@ -230,10 +245,11 @@
   </div>
 </header>
 
+<div class="pc-nav pc-only" id="pcNav"></div>
+
 <div class="layout">
   <div class="settings-col" id="settingsCol">
     <div class="stepbar mobile-only" id="stepbar"></div>
-    <div class="pc-nav pc-only" id="pcNav"></div>
     <div id="settingsBody"></div>
     <div class="navrow mobile-only" id="mobileNav">
       <button class="btn back" onclick="goStep(-1)">戻</button>
@@ -764,6 +780,14 @@ function createMoneyInput(getValue, setValue, placeholder){
   });
   return input;
 }
+function syncHeaderHeight(){
+  try{
+    const header = document.querySelector('header.appbar');
+    if(header && header.offsetHeight){
+      document.body.style.paddingTop = header.offsetHeight + 'px';
+    }
+  }catch(e){}
+}
 function isPC(){ return window.matchMedia('(min-width:900px)').matches; }
 
 function makePanel(title, id){
@@ -808,11 +832,11 @@ function updateHeaderSummary(){
    6. 設定パネル
 ========================================================= */
 function ensureHistoricalYearsShown(purchaseYear){
-  if(state.historicalYearsShown === undefined){
+  if(state._histInitYear !== purchaseYear){
     state.historicalYearsShown = [];
     for(let y=BASE_YEAR-1; y>=BASE_YEAR-2 && y>purchaseYear; y--){ state.historicalYearsShown.push(y); }
+    state._histInitYear = purchaseYear;
   }
-  state.historicalYearsShown = state.historicalYearsShown.filter(y=> y>purchaseYear && y<BASE_YEAR);
 }
 
 function buildBasicPanel(){
@@ -837,7 +861,9 @@ function buildBasicPanel(){
   rowB.appendChild(cornerField);
   body.appendChild(rowB);
 
-  body.appendChild(field('契約日(購入日)', bindInput(el('input',{type:'date'}),'contractDate')));
+  const contractDateInput = bindInput(el('input',{type:'date'}),'contractDate');
+  contractDateInput.addEventListener('change', ()=> renderSettings());
+  body.appendChild(field('契約日(購入日)', contractDateInput));
   const row1 = el('div',{class:'row2'});
   row1.appendChild(field('購入価格(万円)', bindMoneyInput('totalPrice')));
   row1.appendChild(field('専有面積(㎡)', bindInput(el('input',{type:'number', step:'0.01'}),'floorArea',true)));
@@ -933,12 +959,35 @@ function buildBasicPanel(){
   const slider = el('input',{type:'range', min:'1', max:'6', step:'0.01'});
   slider.value = state.expenseRate;
   const sliderVal = el('span',{class:'slider-val'}, `${state.expenseRate}%`);
-  slider.addEventListener('input', ()=>{ state.expenseRate = Number(slider.value); sliderVal.textContent = `${slider.value}%`; saveState(); });
   sliderRow.appendChild(slider); sliderRow.appendChild(sliderVal);
   sliderWrap.appendChild(sliderRow);
-  sliderWrap.appendChild(el('div',{class:'hint'},'実額がわかる場合は下に直接入力してください(優先されます)'));
+  sliderWrap.appendChild(el('div',{class:'hint'},'率と実額は連動します。どちらを編集しても、もう一方が自動計算されます。'));
   body.appendChild(sliderWrap);
-  body.appendChild(field('購入諸経費 実額(万円・任意)', bindMoneyInput('expenseAmount')));
+  const amountInput = el('input',{type:'text', inputmode:'numeric'});
+  amountInput.value = formatComma(state.expenseAmount ?? Math.round(Number(state.totalPrice)*state.expenseRate/100));
+  body.appendChild(field('購入諸経費 実額(万円)', amountInput));
+
+  slider.addEventListener('input', ()=>{
+    state.expenseRate = Number(slider.value);
+    sliderVal.textContent = `${slider.value}%`;
+    const amt = Math.round(Number(state.totalPrice) * state.expenseRate / 100);
+    state.expenseAmount = amt;
+    amountInput.value = formatComma(amt);
+    saveState();
+  });
+  amountInput.addEventListener('input', ()=>{
+    const raw = amountInput.value.replace(/[^0-9.\-]/g,'');
+    const amt = raw===''? null : Number(raw);
+    state.expenseAmount = amt;
+    if(amt!==null && Number(state.totalPrice)>0){
+      const rate = amt / Number(state.totalPrice) * 100;
+      state.expenseRate = Math.round(rate*100)/100;
+      slider.value = state.expenseRate;
+      sliderVal.textContent = `${state.expenseRate}%`;
+    }
+    saveState();
+    amountInput.value = amt===null? '' : formatComma(amt);
+  });
 
   return panel;
 }
@@ -1387,11 +1436,34 @@ function setHighlightedYear(year){
   if(chartInstance && chartInstance._barBaseColors){
     const bar = chartInstance.data.datasets.find(d=>d.type==='bar');
     if(bar){
-      bar.backgroundColor = chartInstance.data.labels.map((l,i)=> Number(l)===Number(year) ? '#0D5A40' : chartInstance._barBaseColors[i]);
+      const hlColor = chartInstance._barHighlightColor || '#B9DED1';
+      bar.backgroundColor = chartInstance.data.labels.map((l,i)=> Number(l)===Number(year) ? hlColor : chartInstance._barBaseColors[i]);
       chartInstance.update('none');
     }
   }
 }
+
+const currentYearMarkerPlugin = {
+  id: 'currentYearMarker',
+  afterDraw(chart){
+    const xScale = chart.scales.x;
+    if(!xScale) return;
+    const idx = chart.data.labels.indexOf(BASE_YEAR);
+    if(idx === -1) return;
+    const x = xScale.getPixelForValue(idx);
+    const top = chart.chartArea.top;
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.fillStyle = '#0D5A40';
+    ctx.beginPath();
+    ctx.moveTo(x-5, top-14);
+    ctx.lineTo(x+5, top-14);
+    ctx.lineTo(x, top-4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+};
 
 function drawChart(canvas, s){
   if(chartInstance) chartInstance.destroy();
@@ -1409,18 +1481,23 @@ function drawChart(canvas, s){
   const accrued  = visible.map(r=>Math.round(r.accruedGain));
 
   const GREEN = '#147B58';
-  const GREEN_BAR = '#8FC7B4';
-  const LIGHT_GRAY = '#D6D5D0';
-  const DARK_GRAY = '#8A8985';
+  const BAR_DEFAULT = '#CFE8DF';
+  const BAR_HIGHLIGHT = '#B9DED1';
+  const LIGHT_GRAY = '#D9D8D3';
 
-  const barColors = visible.map(r=> r.year < BASE_YEAR ? (r.year===purchaseYear ? DARK_GRAY : LIGHT_GRAY) : GREEN_BAR);
+  const barColors = visible.map(r=> r.year < BASE_YEAR ? LIGHT_GRAY : BAR_DEFAULT);
   const barBorderColors = visible.map(r=> Number(r.year)===Number(saleYear) ? '#0D5A40' : 'rgba(0,0,0,0.15)');
   const barBorderWidths = visible.map(r=> Number(r.year)===Number(saleYear) ? 3 : 1);
+
+  const allVals = [...netProfit, ...priceDiff, ...accrued, 0];
+  const maxVal = Math.max(...allVals);
+  const suggestedMax = Math.ceil((maxVal*1.25)/100)*100;
 
   const hasDatalabels = !!window.ChartDataLabels;
   if(hasDatalabels && !Chart._klRegistered){ Chart.register(window.ChartDataLabels); Chart._klRegistered = true; }
 
   chartInstance = new Chart(canvas, {
+    plugins:[currentYearMarkerPlugin],
     data:{
       labels,
       datasets:[
@@ -1428,22 +1505,23 @@ function drawChart(canvas, s){
           type:'bar', label:'売却益(課税後)', data:netProfit,
           backgroundColor:barColors, borderColor:barBorderColors, borderWidth:barBorderWidths, order:3,
           datalabels: hasDatalabels ? {
-            anchor:'center', align:'center', color:'#123', font:{size:9,weight:'bold'},
+            anchor:'end', align: ctx=> ctx.dataIndex%2===0 ? 'end':'start', offset:2, clamp:true,
+            color:'#12281F', font:{size:9,weight:'bold'},
             formatter: v=> Math.round(v).toLocaleString()
           } : undefined
         },
         {
           type:'line', label:'売買価格差', data:priceDiff, borderWidth:2, pointRadius:0, tension:0.2, order:1,
-          segment:{ borderColor: ctx=>{ const yr=visible[ctx.p1DataIndex].year; return yr<BASE_YEAR ? (yr===purchaseYear?DARK_GRAY:LIGHT_GRAY) : GREEN; } },
+          segment:{ borderColor: ctx=>{ const yr=visible[ctx.p1DataIndex].year; return yr<BASE_YEAR ? LIGHT_GRAY : GREEN; } },
           borderColor: GREEN,
           datalabels: hasDatalabels ? {
-            align:'top', color: GREEN, font:{size:9,weight:'bold'},
+            align:'top', clamp:true, color: GREEN, font:{size:9,weight:'bold'},
             formatter: v=> (v>=0?'+':'') + Math.round(v).toLocaleString()
           } : undefined
         },
         {
           type:'line', label:'含み益', data:accrued, borderWidth:2, pointRadius:0, tension:0.2, borderDash:[4,4], order:2,
-          segment:{ borderColor: ctx=>{ const yr=visible[ctx.p1DataIndex].year; return yr<BASE_YEAR ? (yr===purchaseYear?DARK_GRAY:LIGHT_GRAY) : GREEN; } },
+          segment:{ borderColor: ctx=>{ const yr=visible[ctx.p1DataIndex].year; return yr<BASE_YEAR ? LIGHT_GRAY : GREEN; } },
           borderColor: GREEN,
           datalabels: { display:false }
         }
@@ -1451,21 +1529,23 @@ function drawChart(canvas, s){
     },
     options:{
       responsive:true, maintainAspectRatio:false,
+      layout:{ padding:{ top:24 } },
       onHover:(evt, elements)=>{
         if(elements.length){ setHighlightedYear(visible[elements[0].index].year); }
         else{ setHighlightedYear(null); }
       },
       plugins:{
-        legend:{ display:true, position:'top', labels:{ font:{size:10}, boxWidth:18 } },
+        legend:{ display:true, position:'top', align:'end', labels:{ font:{size:10}, boxWidth:14 } },
         datalabels: hasDatalabels ? {} : undefined
       },
       scales:{
-        y:{ beginAtZero:true, ticks:{ font:{size:10} }, grid:{ color:'rgba(20,50,45,0.18)' } },
-        x:{ ticks:{ font:{size:10} }, grid:{ color:'rgba(20,50,45,0.10)' } }
+        y:{ beginAtZero:true, suggestedMax, ticks:{ font:{size:10} }, grid:{ color:'rgba(20,50,45,0.18)' } },
+        x:{ ticks:{ font:{size:10} }, grid:{ display:false } }
       }
     }
   });
   chartInstance._barBaseColors = barColors;
+  chartInstance._barHighlightColor = BAR_HIGHLIGHT;
 }
 
 /* =========================================================
@@ -1541,6 +1621,7 @@ function renderResults(){
 
 function render(){
   updateHeaderSummary();
+  syncHeaderHeight();
   if(!isPC()){
     renderStepbar();
     document.getElementById('nextBtn').textContent = state.step<6 ? `次へ:${STEP_LABELS[state.step]||''}` : '入力に戻る';
@@ -1567,6 +1648,7 @@ function goStep(delta){
 loadState();
 render();
 window.matchMedia('(min-width:900px)').addEventListener('change', ()=> render());
+window.addEventListener('resize', ()=> syncHeaderHeight());
 </script>
 </body>
 </html>
