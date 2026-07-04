@@ -531,9 +531,9 @@ function signedPct(n, digits){
 function computeTaxDetail(taxableGain, holdingYears){
   taxableGain = Math.max(taxableGain, 0);
   let income, resident;
-  if(holdingYears < 5){ income = taxableGain * 0.3063; resident = taxableGain * 0.09; }
-  else if(holdingYears < 10){ income = taxableGain * 0.15315; resident = taxableGain * 0.05; }
-  else {
+  if(holdingYears <= 5){ income = taxableGain * 0.3063; resident = taxableGain * 0.09; }       // 5年以下:短期譲渡
+  else if(holdingYears <= 10){ income = taxableGain * 0.15315; resident = taxableGain * 0.05; } // 5年超〜10年以下:長期譲渡(通常)
+  else {                                                                                         // 10年超:軽減税率の特例
     const threshold = 6000;
     if(taxableGain <= threshold){ income = taxableGain * 0.1021; resident = taxableGain * 0.04; }
     else {
@@ -619,7 +619,7 @@ function runFullCalculation(s){
   const saleExpense = salePrice * Number(s.brokerageFeeRate)/100;
 
   const gain = salePrice - acquisitionCost - saleExpense;
-  const isLongTerm = holdingYears >= 5;
+  const isLongTerm = holdingYears > 5;
 
   const detailNoException = computeTaxDetail(gain, holdingYears);
   const gainAfter3000 = Math.max(gain - 3000, 0);
@@ -697,7 +697,7 @@ function computeYearlyTable(s){
     const jan1 = new Date(y, 0, 1);
     const taxDays = Math.max(Math.round((jan1 - contractD)/86400000), 0);
     const taxYears = calcTaxHoldingYears(s.contractDate, `${y}-01-01`);
-    const classification = taxYears>=5 ? '長期' : '短期';
+    const classification = taxYears>5 ? '長期' : '短期';
 
     const cumulativeDep = dep.series[y] ? dep.series[y].cumulativeBefore : 0;
     const rateUsed = dep.series[y] ? dep.series[y].rate : 0;
@@ -1532,20 +1532,31 @@ const currentYearMarkerPlugin = {
   afterDraw(chart){
     const xScale = chart.scales.x;
     if(!xScale) return;
-    const idx = chart.data.labels.indexOf(BASE_YEAR);
-    if(idx === -1) return;
-    const x = xScale.getPixelForValue(idx);
-    const top = chart.chartArea.top;
     const ctx = chart.ctx;
-    ctx.save();
-    ctx.fillStyle = '#0D5A40';
-    ctx.beginPath();
-    ctx.moveTo(x-5, top-14);
-    ctx.lineTo(x+5, top-14);
-    ctx.lineTo(x, top-4);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
+    const top = chart.chartArea.top;
+
+    function drawMarker(year, label, color){
+      const idx = chart.data.labels.indexOf(year);
+      if(idx === -1) return;
+      const x = xScale.getPixelForValue(idx);
+      ctx.save();
+      ctx.fillStyle = color;
+      ctx.font = 'bold 9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, x, top-20);
+      ctx.beginPath();
+      ctx.moveTo(x-5, top-14);
+      ctx.lineTo(x+5, top-14);
+      ctx.lineTo(x, top-4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    drawMarker(chart._todayYear, 'TODAY', '#0D5A40');
+    if(chart._saleYear !== chart._todayYear){
+      drawMarker(chart._saleYear, chart._saleLabel || '売却予定', '#B8823D');
+    }
   }
 };
 
@@ -1619,13 +1630,13 @@ function drawChart(canvas, chartWrap, s){
     },
     options:{
       responsive:true, maintainAspectRatio:false,
-      layout:{ padding:{ top:24 } },
+      layout:{ padding:{ top:44 } },
       onHover:(evt, elements)=>{
         if(elements.length){ setHighlightedYear(visible[elements[0].index].year); }
         else{ setHighlightedYear(null); }
       },
       plugins:{
-        legend:{ display:true, position:'top', align:'end', labels:{ font:{size:10}, boxWidth:14 } },
+        legend:{ display:true, position:'top', align:'end', labels:{ font:{size:10}, boxWidth:14 }, padding:{ bottom:22 } },
         datalabels: hasDatalabels ? {} : undefined
       },
       scales:{
@@ -1636,6 +1647,13 @@ function drawChart(canvas, chartWrap, s){
   });
   chartInstance._barBaseColors = barColors;
   chartInstance._barHighlightColor = BAR_HIGHLIGHT;
+  chartInstance._todayYear = BASE_YEAR;
+  chartInstance._saleYear = saleYear;
+  chartInstance._saleLabel = (()=>{
+    if(!s.saleDate) return '売却予定';
+    const d = new Date(s.saleDate);
+    return `売却予定(${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()})`;
+  })();
 }
 
 /* =========================================================
