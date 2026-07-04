@@ -167,7 +167,7 @@
   .yearline select{ width:100px; padding:5px 7px; font-size:12.5px; }
   .bulk-btn{ font-size:11px; color:var(--green); background:none; border:none; text-decoration:underline; cursor:pointer; padding:0; font-family:inherit; }
 
-  .price-editor{ max-height:420px; overflow-y:auto; border:1px solid var(--line); border-radius:6px; }
+  .price-editor{ border:1px solid var(--line); border-radius:6px; }
   .price-editor .pr{ display:flex; align-items:center; gap:6px; padding:5px 9px; border-bottom:1px solid var(--line); }
   .price-editor .pr:last-child{ border-bottom:none; }
   .price-editor .pr .py{ font-size:12px; color:var(--ink-soft); min-width:44px; }
@@ -200,6 +200,9 @@
   .lockbox p{ font-size:13px; color:var(--ink-soft); margin:0 0 12px; line-height:1.6; }
   .lockbox input{ text-align:center; letter-spacing:.1em; margin-bottom:10px; }
   .err-msg{ color:var(--danger); font-size:12px; margin-top:6px; display:none; }
+  .input-error{ border-color:var(--danger) !important; background:var(--danger-soft) !important; }
+  .stepper-btn{ background:#E4E3DC; border-color:#C9C7BE; color:#5B5A54; }
+  .stepper-btn:hover{ background:#D8D7CE; }
   table.tax-table{ width:100%; border-collapse:collapse; font-size:13px; }
   table.tax-table td{ padding:6px 0; border-bottom:1px solid var(--line); }
   table.tax-table td:last-child{ text-align:right; font-weight:500; }
@@ -772,7 +775,7 @@ function formatComma(n){
   if(isNaN(num)) return '';
   return num.toLocaleString('ja-JP');
 }
-function bindMoneyInput(key, placeholder){
+function bindMoneyInput(key, placeholder, onExtra){
   const input = el('input',{type:'text', inputmode:'numeric'});
   if(placeholder) input.setAttribute('placeholder', placeholder);
   input.value = formatComma(state[key]);
@@ -781,6 +784,7 @@ function bindMoneyInput(key, placeholder){
     state[key] = raw===''? null : Number(raw);
     saveState();
     input.value = raw===''? '' : formatComma(Number(raw));
+    if(onExtra) onExtra();
   });
   return input;
 }
@@ -801,7 +805,10 @@ function syncHeaderHeight(){
   try{
     const header = document.querySelector('header.appbar');
     if(header && header.offsetHeight){
-      document.body.style.paddingTop = header.offsetHeight + 'px';
+      const h = header.offsetHeight;
+      document.body.style.paddingTop = h + 'px';
+      const stepbar = document.getElementById('stepbar');
+      if(stepbar) stepbar.style.top = h + 'px';
     }
   }catch(e){}
 }
@@ -883,10 +890,11 @@ function buildBasicPanel(){
   body.appendChild(rowB);
 
   const contractDateInput = bindInput(el('input',{type:'date'}),'contractDate');
-  contractDateInput.addEventListener('change', ()=> renderSettings());
+  contractDateInput.addEventListener('blur', ()=> renderSettings());
   body.appendChild(field('契約日(購入日)', contractDateInput));
   const row1 = el('div',{class:'row2'});
-  row1.appendChild(field('購入価格(万円)', bindMoneyInput('totalPrice')));
+  const totalPriceInput = bindMoneyInput('totalPrice');
+  row1.appendChild(field('購入価格(万円)', totalPriceInput));
   row1.appendChild(field('専有面積(㎡)', bindInput(el('input',{type:'number', step:'0.01'}),'floorArea',true)));
   body.appendChild(row1);
   body.appendChild(field('現在(2026年)の想定価格(万円・任意)', bindMoneyInput('currentPrice'),
@@ -959,9 +967,27 @@ function buildBasicPanel(){
 
   if(state.allocMethod==='contract'){
     const r = el('div',{class:'row2', style:'margin-top:12px;'});
-    r.appendChild(field('契約書 土地価格(万円)', bindMoneyInput('contractLandPrice')));
-    r.appendChild(field('契約書 建物価格(万円)', bindMoneyInput('contractBuildingPrice')));
+    const landInput = bindMoneyInput('contractLandPrice', null, ()=>validateAlloc());
+    const buildingInput = bindMoneyInput('contractBuildingPrice', null, ()=>validateAlloc());
+    r.appendChild(field('契約書 土地価格(万円)', landInput));
+    r.appendChild(field('契約書 建物価格(万円)', buildingInput));
     body.appendChild(r);
+    const allocErr = el('div',{class:'err-msg', style:'margin-top:-6px;'},'土地価格+建物価格が購入価格と一致していません。');
+    body.appendChild(allocErr);
+
+    function validateAlloc(){
+      const land = Number(state.contractLandPrice)||0;
+      const building = Number(state.contractBuildingPrice)||0;
+      const total = Number(state.totalPrice)||0;
+      const hasBoth = state.contractLandPrice && state.contractBuildingPrice;
+      const mismatch = hasBoth && Math.abs((land+building)-total) > 0.5;
+      [landInput, buildingInput, totalPriceInput].forEach(inp=>{
+        if(mismatch) inp.classList.add('input-error'); else inp.classList.remove('input-error');
+      });
+      allocErr.style.display = mismatch ? 'block' : 'none';
+    }
+    validateAlloc();
+    totalPriceInput.addEventListener('input', validateAlloc);
   } else if(state.allocMethod==='tax'){
     body.appendChild(field('消費税額(万円)', bindMoneyInput('consumptionTax'), '建物価格のみに課税される消費税額です'));
   } else if(state.allocMethod==='assessed'){
@@ -1072,7 +1098,7 @@ function buildPricePanel(){
   body.appendChild(headRow);
 
   function stepBtn(label){
-    return el('button',{class:'btn small', style:'padding:5px 8px;font-size:12px;line-height:1;flex-shrink:0;'}, label);
+    return el('button',{class:'btn small stepper-btn', style:'padding:5px 8px;font-size:12px;line-height:1;flex-shrink:0;'}, label);
   }
 
   const editor = el('div',{class:'price-editor'});
