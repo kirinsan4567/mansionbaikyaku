@@ -14,14 +14,14 @@
     --ink:#222;
     --ink-soft:#666;
     --line:#DDD;
-    --green:#147B58;
-    --green-dark:#0D5A40;
-    --green-light:#8FC7B4;
-    --green-pale:#DCEEE7;
+    --green:#1E5FA8;
+    --green-dark:#14315C;
+    --green-light:#8FB8E0;
+    --green-pale:#DCE9F5;
     --gray-light:#CFCFCC;
     --gray-dark:#6B6B68;
-    --accent:#147B58;
-    --accent-soft:#DCEEE7;
+    --accent:#1E5FA8;
+    --accent-soft:#DCE9F5;
     --danger:#A6432F;
     --danger-soft:#F8ECE8;
     --radius:8px;
@@ -128,8 +128,8 @@
   .panel-head{
     display:flex; align-items:center; justify-content:space-between;
     padding:11px 14px; cursor:pointer; user-select:none;
-    background:linear-gradient(to right, var(--green-pale), #EEF6F2);
-    border-bottom:1px solid #CFE6DC;
+    background:linear-gradient(to right, #CFE0F0, #F7FAFD);
+    border-bottom:1px solid #C3D9EE;
   }
   .panel-head .title-wrap{ display:flex; align-items:center; gap:8px; }
   .panel-head .diamond{
@@ -150,16 +150,17 @@
     width:100%; padding:8px 9px; border:1px solid var(--line); border-radius:6px;
     background:#FDFDFC; font-size:14px; font-family:inherit; color:var(--ink);
   }
-  input:focus, select:focus{ outline:none; border-color:var(--green); box-shadow:0 0 0 2px rgba(20,123,88,0.15); }
+  input:focus, select:focus{ outline:none; border-color:var(--green); box-shadow:0 0 0 2px rgba(30,95,168,0.18); }
   .radio-list label{ display:flex; align-items:flex-start; gap:8px; font-size:13px; padding:7px 0; border-bottom:1px solid var(--line); }
   .radio-list label:last-child{ border-bottom:none; }
   .radio-list input{ margin-top:2px; }
   .slider-row{ display:flex; align-items:center; gap:10px; }
-  input[type=range]{ flex:1; accent-color:var(--green); }
+  input[type=range]{ flex:1; accent-color:#14315C; }
+  input[type=checkbox], input[type=radio]{ accent-color:#14315C; }
   .slider-val{ font-weight:700; min-width:52px; text-align:right; font-size:14px; }
   .segmented{ display:flex; border:1px solid var(--line); border-radius:6px; overflow:hidden; }
   .segmented button{ flex:1; padding:8px 4px; font-size:12px; background:#FDFDFC; border:none; color:var(--ink-soft); cursor:pointer; font-family:inherit; }
-  .segmented button.active{ background:var(--green); color:#fff; }
+  .segmented button.active{ background:#5C8FC7; color:#fff; }
 
   .yearline{ max-height:200px; overflow-y:auto; border:1px solid var(--line); border-radius:6px; }
   .yearline .yr{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 9px; border-bottom:1px solid var(--line); font-size:12.5px; }
@@ -182,7 +183,8 @@
   .price-editor-head .r-input{ flex:1; }
 
   .btn{ padding:10px 14px; border-radius:6px; font-size:14px; font-family:inherit; cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--ink); }
-  .btn.primary{ background:var(--green); border-color:var(--green); color:#fff; font-weight:700; width:100%; }
+  .btn.primary{ background:#14315C; border-color:#14315C; color:#fff; font-weight:700; width:100%; }
+  .btn.primary:hover{ background:#0D2444; }
   .btn.small{ font-size:12px; padding:7px 10px; }
   .navrow{ display:flex; gap:8px; margin-top:6px; }
   .navrow .btn.back{ width:64px; }
@@ -211,13 +213,19 @@
     .tax-cols{ display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; }
   }
   .chart-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
-  .chart-wrap{ position:relative; height:300px; margin-top:6px; }
+  .chart-wrap{ position:relative; height:340px; margin-top:6px; transition:height 0.2s; }
+  .chart-wrap.expanded{ height:510px; }
+  .expand-toggle{
+    cursor:pointer; font-size:16px; color:var(--ink-soft); line-height:1;
+    padding:2px 4px; user-select:none;
+  }
+  .expand-toggle:hover{ color:var(--green-dark); }
   .note-box{ background:var(--danger-soft); border:1px solid #E4C4BA; border-radius:6px; padding:12px; font-size:11.5px; color:#6B2E20; line-height:1.6; margin-top:12px; }
 
   .yearly-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid var(--line); border-radius:6px; }
-  table.yearly-table{ border-collapse:collapse; font-size:11px; white-space:nowrap; width:100%; }
+  table.yearly-table{ border-collapse:collapse; font-size:11px; white-space:nowrap; width:100%; table-layout:fixed; }
   table.yearly-table th, table.yearly-table td{
-    padding:5px 8px; border:1px solid var(--line); text-align:right; width:64px; min-width:64px;
+    padding:5px 6px; border:1px solid var(--line); text-align:right; width:76px; min-width:76px; overflow:hidden; text-overflow:ellipsis;
   }
   table.yearly-table th{ color:var(--ink-soft); font-weight:500; background:var(--green-pale); }
   table.yearly-table td.indent{ padding-left:16px; }
@@ -227,12 +235,14 @@
   }
   table.yearly-table th:first-child{ background:#E4E3DC; }
   table.yearly-table tr.group-head-row td{ background:var(--green-pale); font-weight:700; color:var(--green-dark); }
-  table.yearly-table tr.group-head-row td.group-label{ background:#CFE6DC; }
+  table.yearly-table tr.group-head-row td.group-label{ background:#D6E6F5; }
   .row-toggle{
-    display:inline-block; width:14px; text-align:center; margin-right:4px; cursor:pointer;
-    color:var(--green-dark); font-weight:700; user-select:none;
+    display:inline-flex; align-items:center; justify-content:center;
+    width:16px; height:16px; margin-right:5px; cursor:pointer;
+    color:var(--green-dark); font-weight:700; font-size:11px; user-select:none;
+    border:1px solid var(--green-dark); border-radius:3px; background:#fff; line-height:1;
   }
-  td[data-year].hl-year, th[data-year].hl-year{ background:#B9DED1 !important; }
+  td[data-year].hl-year, th[data-year].hl-year{ background:#CBE0F4 !important; }
   td[data-year].sale-year-col, th[data-year].sale-year-col{ box-shadow: inset 0 0 0 2px var(--green-dark); }
 
   .placeholder-msg{ padding:32px 16px; text-align:center; color:var(--ink-soft); font-size:13px; border:1px dashed var(--line); border-radius:var(--radius); background:#FDFDFC; }
@@ -243,10 +253,10 @@
 <header class="appbar">
   <div class="brand-row">
     <svg class="logo" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <polygon points="20,20 20,3 35,20" fill="#8FC7B4"/>
-      <polygon points="20,20 35,20 20,37" fill="#147B58"/>
-      <polygon points="20,20 20,37 5,20" fill="#0D5A40"/>
-      <polygon points="20,20 5,20 20,3" fill="#0A2E24"/>
+      <polygon points="20,20 20,3 35,20" fill="#8FB8E0"/>
+      <polygon points="20,20 35,20 20,37" fill="#1E5FA8"/>
+      <polygon points="20,20 20,37 5,20" fill="#14315C"/>
+      <polygon points="20,20 5,20 20,3" fill="#072544"/>
     </svg>
     <span class="title">不動産売却益計算シミュレーション</span>
     <span class="sep" id="headerSep" style="display:none;">|</span>
@@ -279,22 +289,36 @@
   <div class="results-col pc-only" id="resultsColPC">
     <div class="results-sticky-head">
       <button class="btn primary" onclick="renderResults()">シミュレーション実行(結果を更新)</button>
+      <button class="btn small" style="margin-top:6px;width:100%;" onclick="toggleMarketView()" id="marketViewBtn">現在売り出し価格試算</button>
     </div>
     <div class="results-scroll">
       <div id="resultsBodyPC"></div>
+      <footer class="site-footer pc-only">
+        <p>本シミュレーターは試算を目的としたものであり、実際の税額・手取り額は税務署の判断や個々の契約条件等により異なります。将来の価格シナリオはあくまで一例であり、将来の市況を保証するものではありません。売却・税務に関するご判断は、税理士等の専門家にご確認の上、ご自身の責任で行ってください。<br>
+        入力された数値はすべてお使いのブラウザ内で計算されており、外部のサーバーに送信されることはありません(パスコード確認を除く)。</p>
+        <div class="footer-brand">
+          <svg width="18" height="18" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <polygon points="20,20 20,3 35,20" fill="#8FB8E0"/>
+            <polygon points="20,20 35,20 20,37" fill="#1E5FA8"/>
+            <polygon points="20,20 20,37 5,20" fill="#14315C"/>
+            <polygon points="20,20 5,20 20,3" fill="#072544"/>
+          </svg>
+          <span>© 2026 KIRIN <a href="https://x.com/kirinsan4567" target="_blank" rel="noopener">@kirinsan4567</a></span>
+        </div>
+      </footer>
     </div>
   </div>
 </div>
 
-<footer class="site-footer">
+<footer class="site-footer mobile-only">
   <p>本シミュレーターは試算を目的としたものであり、実際の税額・手取り額は税務署の判断や個々の契約条件等により異なります。将来の価格シナリオはあくまで一例であり、将来の市況を保証するものではありません。売却・税務に関するご判断は、税理士等の専門家にご確認の上、ご自身の責任で行ってください。<br>
   入力された数値はすべてお使いのブラウザ内で計算されており、外部のサーバーに送信されることはありません(パスコード確認を除く)。</p>
   <div class="footer-brand">
     <svg width="18" height="18" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <polygon points="20,20 20,3 35,20" fill="#8FC7B4"/>
-      <polygon points="20,20 35,20 20,37" fill="#147B58"/>
-      <polygon points="20,20 20,37 5,20" fill="#0D5A40"/>
-      <polygon points="20,20 5,20 20,3" fill="#0A2E24"/>
+      <polygon points="20,20 20,3 35,20" fill="#8FB8E0"/>
+      <polygon points="20,20 35,20 20,37" fill="#1E5FA8"/>
+      <polygon points="20,20 20,37 5,20" fill="#14315C"/>
+      <polygon points="20,20 5,20 20,3" fill="#072544"/>
     </svg>
     <span>© 2026 KIRIN <a href="https://x.com/kirinsan4567" target="_blank" rel="noopener">@kirinsan4567</a></span>
   </div>
@@ -326,7 +350,7 @@ const PRICE_SCENARIOS = {
   worst:    { label:"ワースト(年2-3%下落)",     rates:[1.0000,0.9800,0.9796,0.9792,0.9787,0.9783,0.9778,0.9773,0.9767,0.9762,0.9756,0.9700,0.9691,0.9681,0.9670,0.9659] }
 };
 const BASE_YEAR = 2026;
-const SIM_YEARS = 35;
+const SIM_YEARS = 15;
 
 /* =========================================================
    1. 状態管理
@@ -349,7 +373,8 @@ const defaultState = {
   repairIncrease:false,
   loanBalance:0, loanRate:1.0, loanType:"変動",
   nextPropertyPrice:null, nextExpenseRate:2.69, nextHoldingYears:10, nextScenario:"moderate",
-  unlocked:false
+  unlocked:false,
+  viewMode:'results', marketComps:[], marketMemos:{}, buildingTotalFloors:null
 };
 let state = JSON.parse(JSON.stringify(defaultState));
 let collapsedPanels = {};
@@ -665,10 +690,10 @@ function computeDepreciationSeries(s, maxYearExclusive){
   return { series, buildingAcqCost, landAcqCost, alloc };
 }
 
-/* 年別詳細表(購入年から35年)。売却益(課税後)は「含み益 − 税額」で算出する */
+/* 年別詳細表(購入年〜現在+15年)。グラフと同じ年限に揃えている。売却益(課税後)は「含み益 − 税額」で算出する */
 function computeYearlyTable(s){
   const purchaseYear = s.contractDate ? new Date(s.contractDate).getFullYear() : BASE_YEAR;
-  const endYear = purchaseYear + SIM_YEARS;
+  const endYear = Math.max(BASE_YEAR + SIM_YEARS, purchaseYear);
   const dep = computeDepreciationSeries(s, endYear+1);
   const tsubo = Number(s.floorArea)>0 ? Number(s.floorArea)/3.30578 : 0;
   const purchasePrice = Number(s.totalPrice)||0;
@@ -832,8 +857,10 @@ function makePanel(title, id){
   titleWrap.appendChild(el('span',{class:'diamond'}));
   titleWrap.appendChild(el('h2',{},title));
   head.appendChild(titleWrap);
+  const headRight = el('div',{style:'display:flex;align-items:center;gap:6px;'});
   const chevron = el('span',{class:'chevron'}, collapsedPanels[title] ? '▸' : '▾');
-  head.appendChild(chevron);
+  headRight.appendChild(chevron);
+  head.appendChild(headRight);
   const body = el('div',{class:'panel-body'});
   if(collapsedPanels[title]) body.style.display = 'none';
   head.addEventListener('click', ()=>{
@@ -844,7 +871,7 @@ function makePanel(title, id){
   });
   panel.appendChild(head);
   panel.appendChild(body);
-  return { panel, body };
+  return { panel, body, head, headRight };
 }
 
 /* =========================================================
@@ -901,7 +928,8 @@ function buildBasicPanel(){
 
   const contractDateInput = bindInput(el('input',{type:'date'}),'contractDate');
   contractDateInput.addEventListener('blur', ()=> renderSettings());
-  body.appendChild(field('契約日(購入日)', contractDateInput));
+  body.appendChild(field('取得日(引渡し日)', contractDateInput,
+    '税務上の原則は「引渡しを受けた日」です(所基通33-9)。ご自身の選択で契約締結日を使うことも認められますが、その場合は取得日・譲渡日とも一貫して契約日基準にする必要があります。'));
   const row1 = el('div',{class:'row2'});
   const totalPriceInput = bindMoneyInput('totalPrice');
   row1.appendChild(field('購入価格(万円)', totalPriceInput));
@@ -1097,7 +1125,7 @@ function buildPricePanel(){
   });
   body.appendChild(field('市場予測パターン', seg, '選んだパターンに基づく各年の予測価格が下の表のプレースホルダーに反映されます。'));
 
-  body.appendChild(el('h3',{class:'sub'},`年別の価格予想(${BASE_YEAR}年〜${BASE_YEAR+SIM_YEARS-1}年・35年分)`));
+  body.appendChild(el('h3',{class:'sub'},`年別の価格予想(${BASE_YEAR}年〜${BASE_YEAR+SIM_YEARS-1}年・${SIM_YEARS}年分)`));
   body.appendChild(el('div',{class:'hint', style:'margin-bottom:6px;'},
     '「価格」と「対前年上昇率」はどちらからでも編集できます。±ボタンでも調整できます(価格:100万円単位、上昇率:0.5%単位)。'));
 
@@ -1207,9 +1235,47 @@ function buildPricePanel(){
 
 function buildSaleSettingsPanel(){
   const { panel, body } = makePanel('売却時設定', 'panel-sale');
-  body.appendChild(field('売却予定日(年月日)', bindInput(el('input',{type:'date'}),'saleDate'),
-    '指定した日付の前後の年の予測価格から日割りで補間して売却価格を計算します。'));
+  const saleDateInput = bindInput(el('input',{type:'date'}),'saleDate');
+  saleDateInput.addEventListener('blur', ()=> renderSettings());
+  body.appendChild(field('売却(引渡し)予定日(年月日)', saleDateInput,
+    '指定した日付の前後の年の予測価格から日割りで補間して売却価格を計算します。譲渡日も税務上の原則は引渡し日です(契約日を選ぶ場合は取得日側も契約日で揃える必要があります)。'));
   body.appendChild(field('仲介手数料率(%)', bindInput(el('input',{type:'number', step:'0.1'}),'brokerageFeeRate',true), 'デフォルト:売却価格の1.5%'));
+
+  if(state.contractDate){
+    const purchaseYear = new Date(state.contractDate).getFullYear();
+    let longTermYear = null, reducedRateYear = null;
+    for(let y=purchaseYear; y<=purchaseYear+25; y++){
+      const ty = calcTaxHoldingYears(state.contractDate, `${y}-01-01`);
+      if(longTermYear===null && ty>5) longTermYear = y;
+      if(reducedRateYear===null && ty>10) reducedRateYear = y;
+      if(longTermYear && reducedRateYear) break;
+    }
+    const noteBox = el('div',{style:'margin-top:10px;padding:10px 12px;border-radius:6px;background:#F5F5F2;border:1px solid var(--line);font-size:12px;line-height:1.9;'});
+    noteBox.appendChild(el('div',{style:'font-weight:700;color:var(--ink);margin-bottom:4px;'},'税率・控除が変わるタイミング(保有期間は売却年の1月1日時点で判定)'));
+    noteBox.appendChild(el('div',{},[
+      el('span',{style:'color:#A6432F;font-weight:700;'},'●短期譲渡(39.63%)'),
+      document.createTextNode(`:${purchaseYear}年〜${longTermYear-1}年中の売却`)
+    ]));
+    noteBox.appendChild(el('div',{},[
+      el('span',{style:'color:#B8823D;font-weight:700;'},'●長期譲渡(20.315%)'),
+      document.createTextNode(`:${longTermYear}年〜${reducedRateYear-1}年中の売却`)
+    ]));
+    noteBox.appendChild(el('div',{},[
+      el('span',{style:'color:var(--green-dark);font-weight:700;'},'●軽減税率(10年超・6,000万円以下14.21%)'),
+      document.createTextNode(`:${reducedRateYear}年以降の売却`)
+    ]));
+    noteBox.appendChild(el('div',{style:'margin-top:6px;color:var(--ink-soft);'},'※3,000万円特別控除は保有期間に関わらず自宅用であれば適用可能です(別枠)。'));
+
+    if(state.saleDate){
+      const currentTy = calcTaxHoldingYears(state.contractDate, state.saleDate);
+      const label = currentTy>10 ? '軽減税率の対象です' : (currentTy>5 ? '長期譲渡(通常税率)です' : '短期譲渡です');
+      const color = currentTy>10 ? 'var(--green-dark)' : (currentTy>5 ? '#B8823D' : '#A6432F');
+      noteBox.appendChild(el('div',{style:`margin-top:8px;font-weight:700;color:${color};`},
+        `→ 現在指定中の売却予定日(${state.saleDate})は保有${currentTy}年、${label}`));
+    }
+    body.appendChild(noteBox);
+  }
+
   return panel;
 }
 
@@ -1268,21 +1334,191 @@ function buildMaintenancePanel(){
 ========================================================= */
 let chartInstance = null;
 
+function classifyFloorTier(floor, totalFloors){
+  if(!floor) return '不明';
+  if(!totalFloors) return '不明(総階数未入力)';
+  if(floor >= totalFloors-1) return 'プレミアム・PH';
+  const third = totalFloors/3;
+  if(floor <= third) return '低層';
+  if(floor <= third*2) return '中層';
+  return '高層';
+}
+
+const MARKET_SITES = [
+  { key:'SUUMO', label:'SUUMO', urlFn: q=> `https://www.google.com/search?q=site:suumo.jp+${q}` },
+  { key:'マンションノート', label:'マンションノート', urlFn: q=> `https://www.google.com/search?q=site:mansion-note.com+${q}` },
+  { key:'athome', label:'athome', urlFn: q=> `https://www.google.com/search?q=site:athome.co.jp+${q}` },
+  { key:"LIFULL HOME'S", label:"LIFULL HOME'S", urlFn: q=> `https://www.google.com/search?q=site:homes.co.jp+${q}` }
+];
+
+function buildMarketResearchPage(){
+  const wrap = document.createDocumentFragment();
+
+  const { panel:pIntro, body:bIntro } = makePanel('現在売り出し価格試算(類似物件比較)');
+  bIntro.appendChild(el('p',{style:'font-size:12.5px;color:var(--ink-soft);line-height:1.7;margin:0 0 6px;'},
+    '各サイトで似た条件の部屋を探し、メモを取りながら比較物件を登録すると、㎡の近さと階層で分類して平均価格を試算します。'));
+  bIntro.appendChild(el('p',{style:'font-size:11.5px;color:var(--ink-soft);line-height:1.6;margin:0;background:#F5F5F2;padding:8px 10px;border-radius:6px;'},
+    '※利用規約・技術的制約により、各サイトから自動で情報を取得することはできません。検索結果はご自身の目で確認し、メモとして残してください。'));
+  wrap.appendChild(pIntro);
+
+  const { panel:pSearch, body:bSearch } = makePanel('STEP1:サイトで検索してメモを取る');
+  const searchQuery = state.propertyName || state.buildingName || '';
+  bSearch.appendChild(el('div',{class:'hint', style:'margin-bottom:8px;'},
+    searchQuery ? `検索キーワード:「${searchQuery}」(マンション名から自動設定)` : 'マンション名を「基本」タブで入力すると、検索キーワードが自動で設定されます。'));
+  const siteBtnRow = el('div',{style:'display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;'});
+  MARKET_SITES.forEach(site=>{
+    const btn = el('button',{class:'btn small'}, `${site.label}で検索`);
+    btn.addEventListener('click', ()=>{
+      const q = encodeURIComponent(searchQuery);
+      window.open(site.urlFn(q), '_blank', 'noopener');
+    });
+    siteBtnRow.appendChild(btn);
+  });
+  bSearch.appendChild(siteBtnRow);
+
+  if(!state.marketMemos) state.marketMemos = {};
+  MARKET_SITES.forEach(site=>{
+    const memoWrap = el('div',{class:'field'});
+    memoWrap.appendChild(el('label',{}, `${site.label} メモ`));
+    const ta = el('textarea',{rows:'2', style:'width:100%;padding:8px 9px;border:1px solid var(--line);border-radius:6px;background:#FDFDFC;font-size:13px;font-family:inherit;resize:vertical;'});
+    ta.value = state.marketMemos[site.key] || '';
+    ta.setAttribute('placeholder','例:3階 65㎡ 4,800万円、15階 68㎡ 5,600万円 など、見つけた部屋の情報をメモ');
+    ta.addEventListener('change', ()=>{ state.marketMemos[site.key] = ta.value; saveState(); });
+    memoWrap.appendChild(ta);
+    bSearch.appendChild(memoWrap);
+  });
+  wrap.appendChild(pSearch);
+
+  const { panel:pInput, body:bInput } = makePanel('STEP2:メモをもとに比較物件を登録');
+  const rowA = el('div',{class:'row2'});
+  const sourceSel = el('select');
+  [...MARKET_SITES.map(s=>s.key), 'レインズ(会員のみ)', 'その他'].forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s; sourceSel.appendChild(o); });
+  rowA.appendChild(field('掲載サイト', sourceSel));
+  const floorInput = el('input',{type:'number', placeholder:'例:15'});
+  rowA.appendChild(field('階数', floorInput));
+  bInput.appendChild(rowA);
+  const rowB = el('div',{class:'row2'});
+  const sqmInput = el('input',{type:'number', step:'0.01', placeholder:`例:${state.floorArea}`});
+  rowB.appendChild(field('専有面積(㎡)', sqmInput));
+  const priceInput = createMoneyInput(()=>null, ()=>{}, '例:23000');
+  rowB.appendChild(field('価格(万円)', priceInput));
+  bInput.appendChild(rowB);
+  const noteInput = el('input',{type:'text', placeholder:'メモ(物件名・URLなど、任意)'});
+  bInput.appendChild(field('メモ', noteInput));
+
+  bInput.appendChild(field('この建物の総階数(任意・階層分類に使用)', bindInput(el('input',{type:'number'}),'buildingTotalFloors',true)));
+
+  const addBtn = el('button',{class:'btn primary'}, '+ この物件を追加');
+  addBtn.addEventListener('click', ()=>{
+    const floor = Number(floorInput.value)||null;
+    const sqm = Number(sqmInput.value)||null;
+    const price = Number(priceInput.value.replace(/[^0-9.\-]/g,''))||null;
+    if(!sqm || !price){ alert('専有面積と価格は必須です。'); return; }
+    const entry = { source: sourceSel.value, floor, sqm, price, note: noteInput.value };
+    const isDup = state.marketComps.some(c=> c.source===entry.source && c.floor===entry.floor && c.sqm===entry.sqm && c.price===entry.price);
+    if(isDup){ alert('同じ内容の物件が既に登録されています(重複のため追加しませんでした)。'); return; }
+    state.marketComps.push(entry);
+    saveState();
+    renderResults();
+  });
+  bInput.appendChild(addBtn);
+  wrap.appendChild(pInput);
+
+  const { panel:pList, body:bList } = makePanel(`登録済みの比較物件(${state.marketComps.length}件)`);
+  if(state.marketComps.length===0){
+    bList.appendChild(el('p',{style:'font-size:12.5px;color:var(--ink-soft);'},'まだ物件が登録されていません。'));
+  } else {
+    const subjectSqm = Number(state.floorArea)||0;
+    const table = el('table',{class:'tax-table'});
+    const headTr = document.createElement('tr');
+    ['サイト','階数','階層区分','㎡','価格','対象範囲',''].forEach(h=>{
+      const td = document.createElement('td'); td.style.fontWeight='700'; td.style.color='var(--ink-soft)'; td.style.fontSize='11px'; td.textContent=h; headTr.appendChild(td);
+    });
+    table.appendChild(headTr);
+    state.marketComps.forEach((c,i)=>{
+      const tier = classifyFloorTier(c.floor, Number(state.buildingTotalFloors));
+      const withinRange = subjectSqm>0 && Math.abs(c.sqm-subjectSqm)/subjectSqm <= 0.15;
+      const tr = document.createElement('tr');
+      if(withinRange) tr.style.background = '#CBE0F4';
+      [c.source, c.floor??'-', tier, c.sqm+'㎡', man(c.price), withinRange?'○対象':'×対象外'].forEach(v=>{
+        const td = document.createElement('td'); td.style.fontSize='12px'; td.textContent=v; tr.appendChild(td);
+      });
+      const delTd = document.createElement('td');
+      const delBtn = el('button',{class:'btn small', style:'padding:3px 8px;'}, '×');
+      delBtn.addEventListener('click', ()=>{ state.marketComps.splice(i,1); saveState(); renderResults(); });
+      delTd.appendChild(delBtn);
+      tr.appendChild(delTd);
+      table.appendChild(tr);
+    });
+    bList.appendChild(table);
+  }
+  wrap.appendChild(pList);
+
+  if(state.marketComps.length>0){
+    const subjectSqm = Number(state.floorArea)||0;
+    const included = state.marketComps.filter(c=> subjectSqm>0 && Math.abs(c.sqm-subjectSqm)/subjectSqm <= 0.15);
+    const { panel:pResult, body:bResult } = makePanel('STEP3:階層別の平均価格(㎡近似物件のみ集計)');
+    if(included.length===0){
+      bResult.appendChild(el('p',{style:'font-size:12.5px;color:var(--ink-soft);'},
+        '専有面積が近い(±15%以内)物件がまだありません。対象範囲に入る物件を追加してください。'));
+    } else {
+      const tierGroups = {};
+      included.forEach(c=>{
+        const tier = classifyFloorTier(c.floor, Number(state.buildingTotalFloors));
+        tierGroups[tier] = tierGroups[tier] || [];
+        tierGroups[tier].push(c.price);
+      });
+      const table2 = el('table',{class:'tax-table'});
+      Object.entries(tierGroups).forEach(([tier, prices])=>{
+        const avg = prices.reduce((a,b)=>a+b,0)/prices.length;
+        const tr = document.createElement('tr');
+        tr.appendChild(el('td',{}, `${tier}(${prices.length}件)`));
+        tr.appendChild(el('td',{}, man(avg)));
+        table2.appendChild(tr);
+      });
+      const overallAvg = included.reduce((a,c)=>a+c.price,0)/included.length;
+      const trTotal = document.createElement('tr');
+      trTotal.appendChild(el('td',{style:'font-weight:700;'}, `全体平均(${included.length}件)`));
+      trTotal.appendChild(el('td',{style:'font-weight:700;'}, man(overallAvg)));
+      table2.appendChild(trTotal);
+      bResult.appendChild(table2);
+
+      const applyBtn = el('button',{class:'btn primary', style:'margin-top:10px;'}, `この全体平均(${man(overallAvg)})を現在価格に反映`);
+      applyBtn.addEventListener('click', ()=>{
+        state.currentPrice = Math.round(overallAvg);
+        state.viewMode = 'results';
+        saveState();
+        const btn = document.getElementById('marketViewBtn');
+        if(btn) btn.textContent = '現在売り出し価格試算';
+        render();
+      });
+      bResult.appendChild(applyBtn);
+    }
+    wrap.appendChild(pResult);
+  }
+
+  return wrap;
+}
+
 function buildResults(){
   const wrap = document.createDocumentFragment();
   const result = runFullCalculation(state);
   const replacement = simulateReplacement(state, result);
 
+  const marketLinkBtn = el('button',{class:'btn small mobile-only', style:'width:100%;margin-bottom:10px;'}, '現在売り出し価格試算を開く');
+  marketLinkBtn.addEventListener('click', toggleMarketView);
+  wrap.appendChild(marketLinkBtn);
+
   const { panel:p1, body:b1 } = makePanel('手取り額サマリー(3パターン比較)');
-  const bestNow = Math.max(result.netCash.plan3000, result.netCash.deferred);
   const grid = el('div',{class:'summary-grid'});
+  const recommendNow = result.netCash.plan3000 >= result.netCash.deferred ? 'plan3000' : 'deferred';
   const futureCardVal = !state.unlocked ? null
     : (replacement
         ? man(Math.min(replacement.routeA.lifetimeTax, replacement.routeB.lifetimeTax)) + '(生涯合計税額)'
         : man(result.deferredGain) + '(繰延譲渡益)');
   const cards = [
-    ['税額最小', man(bestNow), false],
-    ['現在手取り最大', man(bestNow), true],
+    ['3,000万円控除を使う場合', man(result.netCash.plan3000), recommendNow==='plan3000'],
+    ['買換え特例を使う場合', man(result.netCash.deferred), recommendNow==='deferred'],
     ['将来影響考慮(参考)', futureCardVal, false]
   ];
   cards.forEach(([lbl,val,reco])=>{
@@ -1292,6 +1528,8 @@ function buildResults(){
     grid.appendChild(c);
   });
   b1.appendChild(grid);
+  b1.appendChild(el('p',{style:'font-size:11px;color:var(--ink-soft);margin:8px 0 0;line-height:1.6;'},
+    '※1・2枚目は「今回の売却だけ」を見た場合の手取り額の比較です。★は今回時点で有利な方。3枚目は、住み替え先を将来売却するところまで見込んだ場合の判断材料です。'));
   wrap.appendChild(p1);
 
   if(!state.unlocked){
@@ -1313,15 +1551,41 @@ function buildResults(){
     lb.appendChild(box);
     wrap.appendChild(lockp);
   } else {
-    const { panel:p3, body:b3 } = makePanel('売却益推定チャート');
+    const { panel:p3, body:b3, headRight:hr3 } = makePanel('売却益推定チャート');
+    const expandBtn = el('span',{class:'expand-toggle'}, '⇕');
+    hr3.insertBefore(expandBtn, hr3.firstChild);
     const chartScroll = el('div',{class:'chart-scroll'});
     const chartWrap = el('div',{class:'chart-wrap'});
     const canvas = el('canvas');
     chartWrap.appendChild(canvas);
     chartScroll.appendChild(chartWrap);
     b3.appendChild(chartScroll);
+    b3.appendChild(el('p',{style:'font-size:11px;color:var(--ink-soft);margin:8px 0 0;line-height:1.6;'},
+      '※含み益 = 売買価格差 − 諸経費(購入時+売却時の諸費用)。税金を差し引く前の金額です。'));
     wrap.appendChild(p3);
     setTimeout(()=>drawChart(canvas, chartWrap, state), 0);
+    expandBtn.addEventListener('click', (ev)=>{
+      ev.stopPropagation();
+      chartWrap.classList.toggle('expanded');
+      if(chartInstance) chartInstance.resize();
+    });
+
+    const { panel:p3b, body:b3b, headRight:hr3b } = makePanel('物件価格の内訳チャート');
+    const expandBtn2 = el('span',{class:'expand-toggle'}, '⇕');
+    hr3b.insertBefore(expandBtn2, hr3b.firstChild);
+    const chartScroll2 = el('div',{class:'chart-scroll'});
+    const chartWrap2 = el('div',{class:'chart-wrap'});
+    const canvas2 = el('canvas');
+    chartWrap2.appendChild(canvas2);
+    chartScroll2.appendChild(chartWrap2);
+    b3b.appendChild(chartScroll2);
+    wrap.appendChild(p3b);
+    setTimeout(()=>drawStackChart(canvas2, chartWrap2, state), 0);
+    expandBtn2.addEventListener('click', (ev)=>{
+      ev.stopPropagation();
+      chartWrap2.classList.toggle('expanded');
+      if(stackChartInstance) stackChartInstance.resize();
+    });
 
     const { panel:p2, body:b2 } = makePanel('税額内訳');
     const colsWrap = el('div',{class:'tax-cols'});
@@ -1393,7 +1657,7 @@ function buildResults(){
     }
     wrap.appendChild(p2b);
 
-    const { panel:p4, body:b4 } = makePanel('年別詳細シミュレーション(購入年から35年)');
+    const { panel:p4, body:b4 } = makePanel(`年別詳細シミュレーション(グラフと同じ年限)`);
     b4.appendChild(el('p',{style:'font-size:11.5px;color:var(--ink-soft);margin:0 0 4px;'},
       '横にスクロールできます。年にカーソルを合わせると、上のグラフと連動してハイライトされます。'));
     b4.appendChild(renderYearlyTables(computeYearlyTable(state), getSaleYear(state)));
@@ -1414,11 +1678,11 @@ function renderYearlyTables(rows, saleYear){
       ['坪単価', r=>man(r.pricePerTsubo)],
       ['価格上昇率(対前年)', r=> r.growthRateYoY===null?'-':signedPct(r.growthRateYoY), true],
       ['価格変動幅(購入価格比)', r=>signedMan(r.priceChange)],
-      ['価格変動率', r=>signedPct(r.priceChangeRate,0)],
+      ['価格変動率', r=>signedPct(r.priceChangeRate,0), true],
       ['売買価格差坪単価', r=>signedMan(r.priceChangePerTsubo)],
       ['含み益', r=>signedMan(r.accruedGain)],
       ['諸経費(購入時/売却時)', r=>man(r.expenseThisYear)],
-      ['経費率', r=>r.expenseRateDisplay.toFixed(2)+'%'],
+      ['経費率', r=>r.expenseRateDisplay.toFixed(2)+'%', true],
       ['うち建物分', r=>man(r.buildingExpensePortion)],
       ['建物価格', r=>man(r.buildingPrice)]
     ]},
@@ -1491,7 +1755,7 @@ function renderYearlyTables(rows, saleYear){
         ev.stopPropagation();
         const cells = Array.from(tr.querySelectorAll('td')).slice(1);
         const collapsed = rowToggle.textContent === '＋';
-        cells.forEach(c=> c.style.visibility = collapsed ? 'visible' : 'hidden');
+        cells.forEach(c=> c.style.display = collapsed ? '' : 'none');
         rowToggle.textContent = collapsed ? '－' : '＋';
       });
     });
@@ -1520,10 +1784,16 @@ function setHighlightedYear(year){
   if(chartInstance && chartInstance._barBaseColors){
     const bar = chartInstance.data.datasets.find(d=>d.type==='bar');
     if(bar){
-      const hlColor = chartInstance._barHighlightColor || '#B9DED1';
+      const hlColor = chartInstance._barHighlightColor || '#CBE0F4';
       bar.backgroundColor = chartInstance.data.labels.map((l,i)=> Number(l)===Number(year) ? hlColor : chartInstance._barBaseColors[i]);
       chartInstance.update('none');
     }
+  }
+  if(stackChartInstance && stackChartInstance._segBaseColors){
+    stackChartInstance.data.datasets.forEach((ds,dsIdx)=>{
+      ds.backgroundColor = stackChartInstance.data.labels.map((l,i)=> Number(l)===Number(year) ? '#CBE0F4' : stackChartInstance._segBaseColors[dsIdx][i]);
+    });
+    stackChartInstance.update('none');
   }
 }
 
@@ -1534,6 +1804,7 @@ const currentYearMarkerPlugin = {
     if(!xScale) return;
     const ctx = chart.ctx;
     const top = chart.chartArea.top;
+    const bottom = chart.chartArea.bottom;
 
     function drawMarker(year, label, color){
       const idx = chart.data.labels.indexOf(year);
@@ -1543,19 +1814,19 @@ const currentYearMarkerPlugin = {
       ctx.fillStyle = color;
       ctx.font = 'bold 9px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(label, x, top-20);
+      ctx.fillText(label, x, top+12);
       ctx.beginPath();
-      ctx.moveTo(x-5, top-14);
-      ctx.lineTo(x+5, top-14);
-      ctx.lineTo(x, top-4);
+      ctx.moveTo(x-5, top+18);
+      ctx.lineTo(x+5, top+18);
+      ctx.lineTo(x, top+28);
       ctx.closePath();
       ctx.fill();
       ctx.restore();
     }
 
-    drawMarker(chart._todayYear, 'TODAY', '#0D5A40');
+    drawMarker(chart._todayYear, 'TODAY', '#14315C');
     if(chart._saleYear !== chart._todayYear){
-      drawMarker(chart._saleYear, chart._saleLabel || '売却予定', '#B8823D');
+      drawMarker(chart._saleYear, chart._saleLabel || '売却予定', '#14315C');
     }
   }
 };
@@ -1580,18 +1851,17 @@ function drawChart(canvas, chartWrap, s){
   const priceDiff = visible.map(r=>Math.round(r.priceChange));
   const accrued  = visible.map(r=>Math.round(r.accruedGain));
 
-  const GREEN = '#147B58';
-  const BAR_DEFAULT = '#CFE8DF';
-  const BAR_HIGHLIGHT = '#5FAF8C';
-  const LIGHT_GRAY = '#D9D8D3';
+  const GREEN = '#1E5FA8';
+  const BAR_MAIN = '#5C8FC7';
+  const BAR_HIGHLIGHT = '#CBE0F4';
 
-  const barColors = visible.map(r=> r.year < BASE_YEAR ? LIGHT_GRAY : BAR_DEFAULT);
-  const barBorderColors = visible.map(r=> Number(r.year)===Number(saleYear) ? '#0D5A40' : 'rgba(0,0,0,0.15)');
+  const barColors = visible.map(()=> BAR_MAIN);
+  const barBorderColors = visible.map(r=> Number(r.year)===Number(saleYear) ? '#14315C' : 'rgba(0,0,0,0.15)');
   const barBorderWidths = visible.map(r=> Number(r.year)===Number(saleYear) ? 3 : 1);
 
   const allVals = [...netProfit, ...priceDiff, ...accrued, 0];
   const maxVal = Math.max(...allVals);
-  const suggestedMax = Math.ceil((maxVal*1.25)/100)*100;
+  const suggestedMax = Math.ceil((maxVal*1.55)/100)*100;
 
   const hasDatalabels = !!window.ChartDataLabels;
   if(hasDatalabels && !Chart._klRegistered){ Chart.register(window.ChartDataLabels); Chart._klRegistered = true; }
@@ -1606,37 +1876,39 @@ function drawChart(canvas, chartWrap, s){
           backgroundColor:barColors, borderColor:barBorderColors, borderWidth:barBorderWidths, order:3,
           datalabels: hasDatalabels ? {
             anchor:'center', align:'center', clamp:true,
-            color:'#12281F', font:{size:9,weight:'bold'},
+            color:'#12203A', font:{size:9,weight:'bold'},
             formatter: v=> Math.round(v).toLocaleString()
           } : undefined
         },
         {
           type:'line', label:'売買価格差', data:priceDiff, borderWidth:2, pointRadius:0, tension:0.2, order:1,
-          segment:{ borderColor: ctx=>{ const yr=visible[ctx.p1DataIndex].year; return yr<BASE_YEAR ? LIGHT_GRAY : GREEN; } },
           borderColor: GREEN,
           datalabels: hasDatalabels ? {
-            align: ctx=> ctx.dataIndex%2===0 ? 'top':'bottom', offset:4, clamp:true,
+            align:'top', offset:4, clamp:true,
             color: GREEN, font:{size:9,weight:'bold'},
             formatter: v=> (v>=0?'+':'') + Math.round(v).toLocaleString()
           } : undefined
         },
         {
           type:'line', label:'含み益', data:accrued, borderWidth:2, pointRadius:0, tension:0.2, borderDash:[4,4], order:2,
-          segment:{ borderColor: ctx=>{ const yr=visible[ctx.p1DataIndex].year; return yr<BASE_YEAR ? LIGHT_GRAY : GREEN; } },
           borderColor: GREEN,
-          datalabels: { display:false }
+          datalabels: hasDatalabels ? {
+            align:'bottom', offset:4, clamp:true,
+            color: GREEN, font:{size:9,weight:'bold'},
+            formatter: v=> (v>=0?'+':'') + Math.round(v).toLocaleString()
+          } : undefined
         }
       ]
     },
     options:{
       responsive:true, maintainAspectRatio:false,
-      layout:{ padding:{ top:44 } },
+      layout:{ padding:{ top:4 } },
       onHover:(evt, elements)=>{
         if(elements.length){ setHighlightedYear(visible[elements[0].index].year); }
         else{ setHighlightedYear(null); }
       },
       plugins:{
-        legend:{ display:true, position:'top', align:'end', labels:{ font:{size:10}, boxWidth:14 }, padding:{ bottom:22 } },
+        legend:{ display:true, position:'top', align:'end', labels:{ font:{size:10}, boxWidth:14 }, padding:{ bottom:10 } },
         datalabels: hasDatalabels ? {} : undefined
       },
       scales:{
@@ -1656,24 +1928,145 @@ function drawChart(canvas, chartWrap, s){
   })();
 }
 
+let stackChartInstance = null;
+const stackTotalPlugin = {
+  id: 'stackTotal',
+  afterDatasetsDraw(chart){
+    if(!chart._stackTotals) return;
+    const { ctx } = chart;
+    const xScale = chart.scales.x, yScale = chart.scales.y;
+    ctx.save();
+    ctx.font = 'bold 10px sans-serif';
+    ctx.fillStyle = '#222';
+    ctx.textAlign = 'center';
+    chart.data.labels.forEach((lbl, i)=>{
+      const total = chart._stackTotals[i];
+      const x = xScale.getPixelForValue(i);
+      const y = yScale.getPixelForValue(total);
+      ctx.fillText(Math.round(total).toLocaleString(), x, y-6);
+    });
+    ctx.restore();
+  }
+};
+
+/* 積み上げ棒の「売却予定年」の列だけ、外周にまとめて枠線を描く(セグメント間の内側の線は出さない) */
+const stackOuterBorderPlugin = {
+  id: 'stackOuterBorder',
+  afterDatasetsDraw(chart){
+    const idx = chart._saleColIdx;
+    if(idx===undefined || idx===null || idx<0) return;
+    const bottomMeta = chart.getDatasetMeta(0).data[idx];
+    const topMeta = chart.getDatasetMeta(chart.data.datasets.length-1).data[idx];
+    if(!bottomMeta || !topMeta) return;
+    const left = bottomMeta.x - bottomMeta.width/2;
+    const right = bottomMeta.x + bottomMeta.width/2;
+    const bottom = bottomMeta.y + bottomMeta.height;
+    const top = topMeta.y;
+    const { ctx } = chart;
+    ctx.save();
+    ctx.strokeStyle = '#14315C';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(left, top, right-left, bottom-top);
+    ctx.restore();
+  }
+};
+
+function drawStackChart(canvas, chartWrap, s){
+  if(stackChartInstance) stackChartInstance.destroy();
+  const rows = computeYearlyTable(s);
+  const purchaseYear = s.contractDate ? new Date(s.contractDate).getFullYear() : BASE_YEAR;
+  const saleYear = getSaleYear(s);
+  const hasHistory = s.historicalPrices && Object.keys(s.historicalPrices).length>0;
+  const chartStartYear = hasHistory ? purchaseYear : BASE_YEAR;
+  const maxChartYear = BASE_YEAR + 15;
+  const visible = rows.filter(r=> r.year >= chartStartYear && r.year <= maxChartYear);
+
+  const minWidth = Math.max(visible.length * 44, 480);
+  chartWrap.style.minWidth = minWidth + 'px';
+  chartWrap.style.width = '100%';
+
+  const labels = visible.map(r=>r.year);
+  const purchasePriceArr = visible.map(()=>Math.round(Number(s.totalPrice)||0));
+  const taxArr = visible.map(r=>Math.round(r.taxTotal));
+  const profitArr = visible.map(r=>Math.round(Math.max(r.netProfit,0)));
+  const stackTotals = visible.map(r=>Math.round(r.price));
+
+  const GRAY = '#C9C7BE';
+  const TAX_GRAY = '#E4E3DC';
+  const PROFIT_BLUE = '#5C8FC7';
+
+  const hasDatalabels = !!window.ChartDataLabels;
+  if(hasDatalabels && !Chart._klRegistered){ Chart.register(window.ChartDataLabels); Chart._klRegistered = true; }
+
+  const segLabel = (color)=> hasDatalabels ? {
+    anchor:'center', align:'center', color:'#1a1a1a', font:{size:9,weight:'bold'},
+    formatter: v => v===0 ? '' : Math.round(v).toLocaleString()
+  } : undefined;
+
+  const saleColIdx = visible.findIndex(r=> Number(r.year)===Number(saleYear));
+
+  const purchaseColorsArr = visible.map(()=>GRAY);
+  const taxColorsArr = visible.map(()=>TAX_GRAY);
+  const profitColorsArr = visible.map(()=>PROFIT_BLUE);
+
+  stackChartInstance = new Chart(canvas, {
+    type:'bar',
+    plugins:[stackTotalPlugin, currentYearMarkerPlugin, stackOuterBorderPlugin],
+    data:{
+      labels,
+      datasets:[
+        { label:'購入価格', data:purchasePriceArr, backgroundColor:purchaseColorsArr.slice(), stack:'s', datalabels: segLabel() },
+        { label:'課税', data:taxArr, backgroundColor:taxColorsArr.slice(), stack:'s', datalabels: segLabel() },
+        { label:'売却益', data:profitArr, backgroundColor:profitColorsArr.slice(), stack:'s', datalabels: segLabel() }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      layout:{ padding:{ top:26 } },
+      onHover:(evt, elements)=>{
+        if(elements.length){ setHighlightedYear(visible[elements[0].index].year); }
+        else{ setHighlightedYear(null); }
+      },
+      plugins:{
+        legend:{ display:true, position:'top', align:'end', labels:{ font:{size:10}, boxWidth:14 } },
+        datalabels: hasDatalabels ? {} : undefined
+      },
+      scales:{
+        x:{ stacked:true, ticks:{ font:{size:10} }, grid:{ display:false } },
+        y:{ stacked:true, beginAtZero:true, suggestedMax: Math.max(...stackTotals)*1.15, ticks:{ font:{size:10} }, grid:{ color:'rgba(20,50,45,0.18)' } }
+      }
+    }
+  });
+  stackChartInstance._stackTotals = stackTotals;
+  stackChartInstance._saleColIdx = saleColIdx;
+  stackChartInstance._segBaseColors = [purchaseColorsArr, taxColorsArr, profitColorsArr];
+  stackChartInstance._todayYear = BASE_YEAR;
+  stackChartInstance._saleYear = saleYear;
+  stackChartInstance._saleLabel = (()=>{
+    if(!s.saleDate) return '売却予定';
+    const d = new Date(s.saleDate);
+    return `売却予定(${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()})`;
+  })();
+}
+
 /* =========================================================
    8. 画面描画(PC/スマホ分岐)
 ========================================================= */
-const STEP_LABELS = ["基本","用途","シナリオ","売却","維持費","結果"];
+const STEP_LABELS = ["基本","シナリオ","維持費","用途","売却","結果"];
 const NAV_CATEGORIES = [
   { key:'basic', label:'基本', target:'panel-basic' },
-  { key:'usage', label:'用途', target:'panel-usage' },
   { key:'scenario', label:'シナリオ', target:'panel-scenario' },
-  { key:'sale', label:'売却', target:'panel-sale' },
-  { key:'maintenance', label:'維持費', target:'panel-maintenance' }
+  { key:'maintenance', label:'維持費', target:'panel-maintenance' },
+  { key:'usage', label:'用途', target:'panel-usage' },
+  { key:'sale', label:'売却', target:'panel-sale' }
 ];
 
 const MOBILE_STEP_SECTIONS = {
   1: ()=>[buildBasicPanel()],
-  2: ()=>[buildUsagePanel(), buildReplacementPanel()].filter(Boolean),
-  3: ()=>[buildPricePanel()],
-  4: ()=>[buildSaleSettingsPanel()],
-  5: ()=>[buildMaintenancePanel()],
+  2: ()=>[buildPricePanel()],
+  3: ()=>[buildMaintenancePanel()],
+  4: ()=>[buildUsagePanel()],
+  5: ()=>[buildSaleSettingsPanel(), buildReplacementPanel()].filter(Boolean),
   6: ()=>[]
 };
 
@@ -1708,11 +2101,11 @@ function renderSettings(){
   body.innerHTML = "";
 
   if(isPC()){
-    [buildBasicPanel(), buildUsagePanel(), buildReplacementPanel(),
-     buildPricePanel(), buildSaleSettingsPanel(), buildMaintenancePanel()]
+    [buildBasicPanel(), buildPricePanel(), buildMaintenancePanel(),
+     buildUsagePanel(), buildSaleSettingsPanel(), buildReplacementPanel()]
       .filter(Boolean).forEach(panel=> body.appendChild(panel));
   } else {
-    if(state.step===6){ body.appendChild(buildResults()); }
+    if(state.step===6){ body.appendChild(state.viewMode==='market' ? buildMarketResearchPage() : buildResults()); }
     else { MOBILE_STEP_SECTIONS[state.step]().forEach(panel=> body.appendChild(panel)); }
   }
 }
@@ -1721,10 +2114,18 @@ function renderResults(){
   if(isPC()){
     const rc = document.getElementById('resultsBodyPC');
     rc.innerHTML = "";
-    rc.appendChild(buildResults());
+    rc.appendChild(state.viewMode==='market' ? buildMarketResearchPage() : buildResults());
   } else if(state.step===6){
     renderSettings();
   }
+}
+
+function toggleMarketView(){
+  state.viewMode = state.viewMode==='market' ? 'results' : 'market';
+  saveState();
+  const btn = document.getElementById('marketViewBtn');
+  if(btn) btn.textContent = state.viewMode==='market' ? 'シミュレーションに戻る' : '現在売り出し価格試算';
+  render();
 }
 
 function render(){
