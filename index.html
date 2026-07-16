@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>不動産売却益計算シミュレーター</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpolygon points='20,20 20,3 35,20' fill='%238FC7B4'/%3E%3Cpolygon points='20,20 35,20 20,37' fill='%23147B58'/%3E%3Cpolygon points='20,20 20,37 5,20' fill='%230D5A40'/%3E%3Cpolygon points='20,20 5,20 20,3' fill='%230A2E24'/%3E%3C/svg%3E">
+<title>不動産売却益計算シミュレーション</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpolygon points='20,20 20,3 35,20' fill='%238FB3E0'/%3E%3Cpolygon points='20,20 35,20 20,37' fill='%231E5FA8'/%3E%3Cpolygon points='20,20 20,37 5,20' fill='%23163F73'/%3E%3Cpolygon points='20,20 5,20 20,3' fill='%230B2547'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <style>
@@ -40,10 +40,10 @@
   }
 
   header.appbar{
-    position:fixed; top:0; left:0; right:0; min-height:var(--header-h); height:auto;
+    position:fixed; top:0; left:0; right:0; height:var(--header-h);
     background:#FFFFFF; color:var(--green-dark);
-    display:flex; align-items:center; flex-wrap:wrap; gap:10px; row-gap:6px;
-    padding:8px 16px; z-index:100;
+    display:flex; align-items:center; gap:10px;
+    padding:0 16px; z-index:100;
     box-shadow:0 1px 4px rgba(0,0,0,0.1);
     border-bottom:1px solid var(--line);
   }
@@ -55,16 +55,13 @@
     font-size:12px; color:#5B6660; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
     flex:1;
   }
-  header.appbar .header-actions{ display:flex; gap:6px; flex-shrink:0; flex-wrap:wrap; }
+  header.appbar .header-actions{ display:flex; gap:6px; flex-shrink:0; }
   header.appbar .header-actions .btn{ padding:6px 9px; font-size:11.5px; }
-  .loan-link-btn{ display:inline-flex; align-items:center; gap:5px; border-color:#C98A3E !important; color:#8A5A22 !important; }
-  .loan-link-btn:hover{ background:#FBF1E2 !important; }
-  .loan-link-btn .loan-icon{ width:15px; height:15px; flex-shrink:0; }
   header.appbar .prop-summary.mobile-only{ display:none; }
 
   @media (max-width:899px){
     header.appbar{
-      padding:8px 12px;
+      height:auto; min-height:var(--header-h); flex-wrap:wrap; padding:8px 12px; row-gap:4px;
     }
     header.appbar .brand-row{ flex-basis:100%; }
     header.appbar .brand-row .prop-summary.pc-only{ display:none !important; }
@@ -78,7 +75,6 @@
   }
   .pc-nav-btn{ background:#fff; border-color:var(--line); color:#1E5FA8 !important; font-weight:700; }
   .pc-nav-btn:hover{ background:#DCE9F5 !important; border-color:#B9D0E8; color:#1E5FA8 !important; }
-  .pc-run-btn{ flex-shrink:0; margin-bottom:10px; }
 
   .results-sticky-head{
     flex-shrink:0; background:var(--paper); padding:0 0 10px;
@@ -123,8 +119,6 @@
   }
   .stepbar button.active{ opacity:1; font-weight:700; box-shadow:0 0 0 2px rgba(13,90,64,0.35); }
   .stepbar button.done{ opacity:0.85; }
-  .stepbar button.stepbar-research-btn{ background:#E4E3DE; border-color:#CFCDC3; color:#000; opacity:1; }
-  .stepbar button.stepbar-research-btn.active{ background:#B7B3A3; border-color:#B7B3A3; color:#000; font-weight:700; }
 
   .panel{
     background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
@@ -166,7 +160,6 @@
   .slider-val{ font-weight:700; min-width:52px; text-align:right; font-size:14px; }
   .segmented{ display:flex; border:1px solid var(--line); border-radius:6px; overflow:hidden; }
   .segmented button{ flex:1; padding:8px 4px; font-size:12px; background:#FDFDFC; border:none; color:var(--ink-soft); cursor:pointer; font-family:inherit; }
-  .segmented button+button{ border-left:1px solid var(--line); }
   .segmented button.active{ background:#5C8FC7; color:#fff; }
 
   .yearline{ max-height:200px; overflow-y:auto; border:1px solid var(--line); border-radius:6px; }
@@ -202,8 +195,6 @@
   .summary-grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
   .sum-card{ background:#FDFDFC; border:1px solid var(--line); border-radius:6px; padding:10px 8px; text-align:center; }
   .sum-card.reco{ border:2px solid var(--accent); background:var(--accent-soft); }
-  .sum-card.disabled{ opacity:0.55; }
-  .sum-card.disabled .val{ color:var(--ink-soft); font-weight:500; }
   .sum-card .lbl{ font-size:10.5px; color:var(--ink-soft); margin-bottom:4px; }
   .sum-card .val{ font-size:14.5px; font-weight:700; }
   .blurred{ filter:blur(6px); user-select:none; }
@@ -230,49 +221,6 @@
   }
   .expand-toggle:hover{ color:var(--green-dark); }
   .note-box{ background:var(--danger-soft); border:1px solid #E4C4BA; border-radius:6px; padding:12px; font-size:11.5px; color:#6B2E20; line-height:1.6; margin-top:12px; }
-  .market-nav-btn{ background:#E4E3DE !important; border-color:#CFCDC3 !important; color:#000 !important; font-weight:600; }
-  .market-nav-btn:hover{ background:#D6D4CB !important; }
-
-  /* 類似物件価格調査・整理ページ:グレー系統の専用テーマ
-     パネル=白、本文=黒文字、タイトル行のみ濃いグレー×白文字、入力欄=白背景×黒文字 */
-  .market-theme{
-    color:#000;
-  }
-  .market-theme .panel{ background:#FFFFFF; border-color:#CFCDC3; }
-  .market-theme .panel-head{ background:linear-gradient(to right,#4C4B45,#3A3A37); border-bottom-color:#3A3A37; }
-  .market-theme .panel-head h2{ color:#FFFFFF; }
-  .market-theme .panel-head .diamond{ background:#C7C5B9; }
-  .market-theme .panel-head .chevron{ color:#FFFFFF; }
-  .market-theme .field label{ color:#000; }
-  .market-theme .hint{ color:#000; }
-  .market-theme input[type=text], .market-theme input[type=date], .market-theme input[type=number],
-  .market-theme select, .market-theme textarea{
-    background:#FFFFFF; border-color:#CFCDC3; color:#000;
-  }
-  .market-theme input:focus, .market-theme select:focus, .market-theme textarea:focus{
-    border-color:#8D8B7C; box-shadow:0 0 0 2px rgba(141,139,124,0.25);
-  }
-  .market-theme .btn{ background:#FFFFFF; border-color:#CFCDC3; color:#000; }
-  .market-theme .btn:hover{ background:#EFEFEA; }
-  .market-theme .btn.primary{ background:#4C4B45; border-color:#4C4B45; color:#fff; }
-  .market-theme .btn.primary:hover{ background:#3A3A37; }
-  .market-theme .btn.primary.market-apply-btn{ background:#14315C !important; border-color:#14315C !important; color:#fff !important; }
-  .market-theme .btn.primary.market-apply-btn:hover{ background:#0D2444 !important; }
-  .market-theme table.tax-table td{ border-bottom-color:#CFCDC3; color:#000; }
-  .market-theme table.tax-table td:last-child{ color:#000; }
-  .market-theme table.tax-table td[style*="color: var(--ink-soft)"]{ color:#000 !important; }
-  .market-theme .match-row{ background:#EFEFEA; }
-  .market-theme .segmented{ border-color:#CFCDC3; }
-  .market-theme .segmented button{ background:#F5F4F1; color:#000; }
-  .market-theme .segmented button+button{ border-left-color:#CFCDC3; }
-  .market-theme .segmented button.active{ background:#B7B3A3; color:#000; font-weight:700; }
-  .market-theme p{ color:#000; }
-  .market-theme p[style*="background:#F5F5F2"]{ background:#F0EFEA !important; color:#000 !important; }
-  .market-form-row{ display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; }
-  .market-form-row .field{ margin:0; }
-  .corner-toggle-btn{ background:#F5F4F1 !important; color:#000 !important; }
-  .corner-toggle-btn.on{ background:#B7B3A3 !important; font-weight:700; }
-
 
   .yearly-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid var(--line); border-radius:6px; }
   table.yearly-table{ border-collapse:collapse; font-size:11px; white-space:nowrap; width:100%; table-layout:fixed; }
@@ -295,7 +243,6 @@
     border:1px solid var(--green-dark); border-radius:3px; background:#fff; line-height:1;
   }
   td[data-year].hl-year, th[data-year].hl-year{ background:#CBE0F4 !important; }
-  table.yearly-table tr.group-head-row td[data-year].hl-year{ background:#6B6B68 !important; color:#fff !important; }
   td[data-year].sale-year-col, th[data-year].sale-year-col{ box-shadow: inset 0 0 0 2px var(--green-dark); }
 
   .placeholder-msg{ padding:32px 16px; text-align:center; color:var(--ink-soft); font-size:13px; border:1px dashed var(--line); border-radius:var(--radius); background:#FDFDFC; }
@@ -311,29 +258,16 @@
       <polygon points="20,20 20,37 5,20" fill="#14315C"/>
       <polygon points="20,20 5,20 20,3" fill="#072544"/>
     </svg>
-    <span class="title">不動産売却益計算シミュレーター</span>
+    <span class="title">不動産売却益計算シミュレーション</span>
     <span class="sep" id="headerSep" style="display:none;">|</span>
     <span class="prop-summary pc-only" id="propSummary"></span>
   </div>
   <span class="prop-summary mobile-only" id="propSummaryMobile"></span>
   <div class="header-actions">
-    <button class="btn small" onclick="exportData()">📁 保存データ書き出し</button>
+    <button class="btn small" onclick="exportData()">📁 外部保存</button>
     <label style="display:flex;">
       <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)">
-      <button class="btn small" type="button" onclick="document.getElementById('importFile').click()">📁 保存データ読込</button>
-    </label>
-    <label style="display:flex;">
-      <input type="file" id="loanSimFile" accept="application/json" style="display:none" onchange="importLoanSimData(event)">
-      <button class="btn small loan-link-btn" type="button" onclick="document.getElementById('loanSimFile').click()">
-        <svg class="loan-icon" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <polygon points="20,20 20,3 35,20" fill="#E8C48A"/>
-          <polygon points="20,20 35,20 20,37" fill="#C98A3E"/>
-          <polygon points="20,20 20,37 5,20" fill="#8A5A22"/>
-          <polygon points="20,20 5,20 20,3" fill="#5C3B15"/>
-          <text x="20" y="24" font-size="14" font-weight="700" fill="#fff" text-anchor="middle" font-family="Arial">¥</text>
-        </svg>
-        住宅ローン返済シミュレーター連携
-      </button>
+      <button class="btn small" type="button" onclick="document.getElementById('importFile').click()">📁 外部読込</button>
     </label>
   </div>
 </header>
@@ -341,7 +275,6 @@
 <div class="layout">
   <div class="settings-col" id="settingsCol">
     <div class="pc-nav pc-only" id="pcNav"></div>
-    <button class="btn primary pc-only pc-run-btn" onclick="runSimulation()">シミュレーション実行(結果を更新)</button>
     <div class="settings-scroll">
       <div class="stepbar mobile-only" id="stepbar"></div>
       <div id="settingsBody"></div>
@@ -349,10 +282,15 @@
         <button class="btn back" onclick="goStep(-1)">戻</button>
         <button class="btn primary" id="nextBtn" onclick="goStep(1)">次へ</button>
       </div>
+      <button class="btn primary pc-only" style="margin-top:4px;" onclick="renderResults()">シミュレーション実行(結果を更新)</button>
     </div>
   </div>
 
   <div class="results-col pc-only" id="resultsColPC">
+    <div class="results-sticky-head">
+      <button class="btn primary" onclick="renderResults()">シミュレーション実行(結果を更新)</button>
+      <button class="btn small" style="margin-top:6px;width:100%;" onclick="toggleMarketView()" id="marketViewBtn">現在売り出し価格試算</button>
+    </div>
     <div class="results-scroll">
       <div id="resultsBodyPC"></div>
       <footer class="site-footer pc-only">
@@ -390,7 +328,7 @@
 /* =========================================================
    0. 定数
 ========================================================= */
-const WORKER_URL = "https://kirin-passcode.krsn34567.workers.dev";
+const WORKER_URL = "https://mansionbaikyaku-passcode.YOUR-SUBDOMAIN.workers.dev";
 
 const STRUCTURES = ["木造","木造モルタル","軽量鉄骨造1","軽量鉄骨造2","重量鉄骨造","RC造","SRC造","れんが造"];
 const DIRECTIONS = ["北","北東","東","南東","南","南西","西","北西"];
@@ -436,9 +374,7 @@ const defaultState = {
   loanBalance:0, loanRate:1.0, loanType:"変動",
   nextPropertyPrice:null, nextExpenseRate:2.69, nextHoldingYears:10, nextScenario:"moderate",
   unlocked:false,
-  viewMode:'results', marketComps:[],
-  marketAggMode:'near', marketCorrection:'simple', marketFilters:null,
-  marketOverviewMethod:'simple', marketOverviewThreshold:20
+  viewMode:'results', marketComps:[], marketMemos:{}, buildingTotalFloors:null
 };
 let state = JSON.parse(JSON.stringify(defaultState));
 let collapsedPanels = {};
@@ -479,117 +415,6 @@ function importData(ev){
     }catch(err){ alert("読み込みに失敗しました。ファイル形式をご確認ください。"); }
   };
   reader.readAsText(file);
-}
-
-/* ---------------------------------------------------------
-   住宅ローン返済シミュレーター(KIRIN loan-simulator)の
-   出力JSONを取り込み、売却時点の残債等を推定する。
-   ※実際のエクスポート形式は住宅ローン返済シミュレーター側の
-   実装に合わせて調整が必要。ここでは代表的なキー名を
-   総当たりで探索し、必ず確認モーダルで内容を見せてから反映する。
---------------------------------------------------------- */
-function findLoanScheduleEntries(obj, path){
-  path = path || [];
-  let found = [];
-  if(Array.isArray(obj)){
-    const looksLikeSchedule = obj.length>0 && obj.every(it=> it && typeof it==='object' &&
-      Object.keys(it).some(k=>/year|年/i.test(k)) &&
-      Object.keys(it).some(k=>/balance|残高|残債/i.test(k)));
-    if(looksLikeSchedule){
-      obj.forEach(it=>{
-        const yearKey = Object.keys(it).find(k=>/year|年/i.test(k));
-        const balKey = Object.keys(it).find(k=>/balance|残高|残債/i.test(k));
-        const y = Number(it[yearKey]);
-        const b = Number(it[balKey]);
-        if(!isNaN(y) && !isNaN(b)) found.push({ year:y, balance:b, path:path.join('.') });
-      });
-      return found;
-    }
-    obj.forEach((v,i)=>{ found = found.concat(findLoanScheduleEntries(v, path.concat(i))); });
-    return found;
-  }
-  if(obj && typeof obj==='object'){
-    Object.entries(obj).forEach(([k,v])=>{ found = found.concat(findLoanScheduleEntries(v, path.concat(k))); });
-  }
-  return found;
-}
-function findFirstMatch(obj, regex, depth){
-  depth = depth||0;
-  if(depth>6 || obj===null || obj===undefined) return null;
-  if(typeof obj==='object'){
-    for(const [k,v] of Object.entries(obj)){
-      if(regex.test(k) && (typeof v==='number' || typeof v==='string') && v!=='') return v;
-    }
-    for(const v of Object.values(obj)){
-      const r = findFirstMatch(v, regex, depth+1);
-      if(r!==null) return r;
-    }
-  }
-  return null;
-}
-function showLoanImportModal(candidate){
-  const overlay = el('div',{style:'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px;'});
-  const box = el('div',{style:'background:#fff;border-radius:10px;padding:20px;max-width:420px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,0.25);'});
-  box.appendChild(el('h3',{style:'margin:0 0 10px;font-size:15px;color:var(--green-dark);'},'住宅ローン返済シミュレーターのデータ取込'));
-  box.appendChild(el('p',{style:'font-size:12.5px;color:var(--ink-soft);line-height:1.7;margin:0 0 12px;'},
-    `売却予定年(${candidate.saleYear}年)に一致・近似する残債データを検出しました。内容を確認し、必要であれば修正のうえ反映してください。`));
-
-  const yearField = field('対象年', (()=>{ const i=el('input',{type:'number'}); i.value=candidate.year??candidate.saleYear; return i; })());
-  const balField = field('売却時点の残債(万円)', (()=>{ const i=el('input',{type:'number'}); i.value = candidate.balance ?? ''; return i; })());
-  box.appendChild(yearField); box.appendChild(balField);
-
-  if(candidate.rate!==null && candidate.rate!==undefined){
-    box.appendChild(el('p',{style:'font-size:11.5px;color:var(--ink-soft);margin:4px 0 0;'}, `検出した金利情報:${candidate.rate}`));
-  }
-  if(candidate.notFound){
-    box.appendChild(el('p',{style:'font-size:12px;color:var(--danger);margin:0 0 10px;'},
-      '自動検出できませんでした。数値を手入力のうえ反映するか、キャンセルしてください。'));
-  }
-
-  const btnRow = el('div',{style:'display:flex;gap:8px;margin-top:14px;'});
-  const cancelBtn = el('button',{class:'btn', style:'flex:1;'},'キャンセル');
-  const applyBtn = el('button',{class:'btn primary', style:'flex:1;'},'この内容を反映');
-  cancelBtn.addEventListener('click', ()=> overlay.remove());
-  applyBtn.addEventListener('click', ()=>{
-    const balInput = balField.querySelector('input');
-    const v = Number(balInput.value);
-    if(!isNaN(v)){
-      state.loanBalance = v;
-      saveState(); renderSettings(); if(isPC()) renderResults();
-    }
-    overlay.remove();
-    alert('住宅ローン返済シミュレーターのデータを「維持費」タブの残債欄に反映しました。');
-  });
-  btnRow.appendChild(cancelBtn); btnRow.appendChild(applyBtn);
-  box.appendChild(btnRow);
-  overlay.appendChild(box);
-  document.body.appendChild(overlay);
-}
-function importLoanSimData(ev){
-  const file = ev.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e=>{
-    let data;
-    try{ data = JSON.parse(e.target.result); }
-    catch(err){ alert('読み込みに失敗しました。住宅ローン返済シミュレーターから書き出したJSONファイルをご指定ください。'); return; }
-    const saleYear = getSaleYear(state);
-    const schedule = findLoanScheduleEntries(data);
-    let best = null;
-    if(schedule.length){
-      best = schedule.reduce((a,b)=> Math.abs(a.year-saleYear) <= Math.abs(b.year-saleYear) ? a : b);
-    }
-    const rate = findFirstMatch(data, /rate|金利/i);
-    showLoanImportModal({
-      saleYear,
-      year: best ? best.year : saleYear,
-      balance: best ? Math.round(best.balance) : null,
-      rate: rate ?? null,
-      notFound: !best
-    });
-  };
-  reader.readAsText(file);
-  ev.target.value = '';
 }
 
 /* =========================================================
@@ -652,30 +477,12 @@ function getDepreciationRateForYear(s, usage, buildingPriceAtPurchase, purchaseE
 
 function getYearUsage(s, year){ return s.yearUsage[year] || s.initialUse; }
 
-/* 「現在の想定価格」が未入力の場合の仮の現在価格を、選択中のシナリオの
-   年率で購入年から今年まで複利計算して見積もる(空欄なら"変化なし"扱いにしていたのが
-   TODAYの位置に購入価格をそのまま出してしまっていた原因)。 */
-function estimateCurrentPriceFromScenario(s){
-  const purchasePrice = Number(s.totalPrice)||0;
-  const purchaseYear = s.contractDate ? new Date(s.contractDate).getFullYear() : BASE_YEAR;
-  const yearsElapsed = BASE_YEAR - purchaseYear;
-  if(yearsElapsed<=0) return purchasePrice;
-  const rates = PRICE_SCENARIOS[s.scenario].rates;
-  let price = purchasePrice;
-  for(let i=1;i<=yearsElapsed;i++){
-    const idx = Math.min(i, rates.length-1);
-    const yoyRate = rates[idx]/rates[idx-1] - 1;
-    price *= (1+yoyRate);
-  }
-  return price;
-}
-
 /* 将来(BASE_YEAR以降)の価格を、前年からの連鎖(価格 or 上昇率の上書き)で計算するシリーズ */
 function buildFuturePriceSeries(s){
   const scenarioRates = PRICE_SCENARIOS[s.scenario].rates;
   const yoy = scenarioRates.map((r,i)=> i===0 ? 0 : (r/scenarioRates[i-1]) - 1);
   const purchasePrice = Number(s.totalPrice)||0;
-  const currentBase = s.currentPrice ? Number(s.currentPrice) : estimateCurrentPriceFromScenario(s);
+  const currentBase = s.currentPrice ? Number(s.currentPrice) : purchasePrice;
 
   const series = {};
   for(let i=0;i<SIM_YEARS;i++){
@@ -698,7 +505,7 @@ function buildFuturePriceSeries(s){
 
 function priceForYear(s, year){
   const purchasePrice = Number(s.totalPrice)||0;
-  const currentBase = s.currentPrice ? Number(s.currentPrice) : estimateCurrentPriceFromScenario(s);
+  const currentBase = s.currentPrice ? Number(s.currentPrice) : purchasePrice;
   const purchaseYear = s.contractDate ? new Date(s.contractDate).getFullYear() : BASE_YEAR;
 
   if(s.historicalPrices && s.historicalPrices[year]) return Number(s.historicalPrices[year]);
@@ -716,9 +523,9 @@ function priceForYear(s, year){
         if(ky > year && ky < hiYear){ hiYear = ky; hiPrice = kp; }
       });
     }
-    // 既知の2点の間は、まず仮置きとして単純な線形補間で埋める
-    const t = (year - loYear) / Math.max(hiYear - loYear, 1);
-    return loPrice + (hiPrice - loPrice) * t;
+    const span = Math.max(hiYear - loYear, 1);
+    const cagr = Math.pow(hiPrice/loPrice, 1/span) - 1;
+    return loPrice * Math.pow(1+cagr, year - loYear);
   }
 
   const series = buildFuturePriceSeries(s);
@@ -762,23 +569,6 @@ function computeTaxDetail(taxableGain, holdingYears){
   return { income, resident, total: income + resident };
 }
 
-/* 「特定の居住用財産の買換え特例」の主な適用要件のうち、
-   本シミュレーターの入力から自動判定できるものだけを判定する。
-   (1)譲渡対価(売却価格)が1億円以下であること
-   (2)譲渡年の1月1日時点で所有期間が10年を超えていること
-   ※実際にはこの他にも、居住期間10年以上、買換え資産の床面積要件、
-   親族間売買でないこと等、複数の要件があるため、最終判断は税理士・
-   国税庁サイトでの確認が必要。 */
-const REPLACEMENT_SALE_PRICE_CAP_MAN = 10000; // 万円 = 1億円
-function checkReplacementEligibility(salePrice, holdingYears){
-  const priceOk = salePrice <= REPLACEMENT_SALE_PRICE_CAP_MAN;
-  const holdingOk = holdingYears > 10;
-  const reasons = [];
-  if(!priceOk) reasons.push(`譲渡価格(${man(salePrice)})が1億円(${REPLACEMENT_SALE_PRICE_CAP_MAN.toLocaleString()}万円)を超えているため利用できません`);
-  if(!holdingOk) reasons.push(`所有期間が${holdingYears}年で、要件の「10年超」を満たさないため利用できません`);
-  return { eligible: priceOk && holdingOk, priceOk, holdingOk, reasons };
-}
-
 function simulateReplacement(s, firstResult){
   if(s.planToMove !== '予定あり' || !s.nextPropertyPrice) return null;
   const nextPrice = Number(s.nextPropertyPrice);
@@ -799,13 +589,10 @@ function simulateReplacement(s, firstResult){
   const taxB = computeTaxDetail(gainB, nextHoldYears);
   const lifetimeTaxB = firstResult.detailDeferred.total + taxB.total;
 
-  const eligible = firstResult.replacementEligibility.eligible;
-
   return {
     routeA:{ tax:taxA, lifetimeTax:lifetimeTaxA },
     routeB:{ tax:taxB, lifetimeTax:lifetimeTaxB },
-    eligible,
-    recommend: !eligible ? 'A' : (lifetimeTaxA <= lifetimeTaxB ? 'A' : 'B')
+    recommend: lifetimeTaxA <= lifetimeTaxB ? 'A' : 'B'
   };
 }
 
@@ -864,7 +651,6 @@ function runFullCalculation(s){
   const detail3000 = computeTaxDetail(gainAfter3000, holdingYears);
   const detailDeferred = { income:0, resident:0, total:0 };
   const deferredGain = Math.max(gain, 0);
-  const replacementEligibility = checkReplacementEligibility(salePrice, holdingYears);
 
   const netCash = {
     plan3000: salePrice - saleExpense - detail3000.total - Number(s.loanBalance),
@@ -872,7 +658,7 @@ function runFullCalculation(s){
   };
 
   return { alloc, acquisitionCost, salePrice, saleExpense, gain, isLongTerm, holdingYears,
-    detailNoException, detail3000, detailDeferred, deferredGain, netCash, replacementEligibility };
+    detailNoException, detail3000, detailDeferred, deferredGain, netCash };
 }
 
 function calcAccruedGainForYear(s, year){
@@ -1334,7 +1120,7 @@ function buildPricePanel(){
   Object.entries(PRICE_SCENARIOS).forEach(([key,v])=>{
     const btn = el('button',{}, v.label.split('(')[0]);
     if(state.scenario===key) btn.classList.add('active');
-    btn.addEventListener('click', ()=>{ state.scenario=key; saveState(); renderSettings(); if(isPC()) renderResults(); });
+    btn.addEventListener('click', ()=>{ state.scenario=key; saveState(); renderSettings(); });
     seg.appendChild(btn);
   });
   body.appendChild(field('市場予測パターン', seg, '選んだパターンに基づく各年の予測価格が下の表のプレースホルダーに反映されます。'));
@@ -1539,7 +1325,7 @@ function buildMaintenancePanel(){
   row3.appendChild(field('金利タイプ', bindSelect(el('select'),'loanType',['変動','固定'])));
   row3.appendChild(field('金利(%)', bindInput(el('input',{type:'number', step:'0.01'}),'loanRate',true)));
   body.appendChild(row3);
-  body.appendChild(el('div',{class:'hint'},'※画面上部の「住宅ローン返済シミュレーター連携」ボタンから、住宅ローン返済シミュレーターの出力JSONを取り込み、この残債欄に自動反映できます(反映前に内容を確認するモーダルが表示されます)。'));
+  body.appendChild(el('div',{class:'hint'},'※将来的に、KIRIN住宅ローンシミュレーターからのインポート機能を追加予定です。'));
   return panel;
 }
 
@@ -1547,8 +1333,16 @@ function buildMaintenancePanel(){
    7. 結果画面
 ========================================================= */
 let chartInstance = null;
-let marketEditIndex = null;
-let marketOverviewCharts = [];
+
+function classifyFloorTier(floor, totalFloors){
+  if(!floor) return '不明';
+  if(!totalFloors) return '不明(総階数未入力)';
+  if(floor >= totalFloors-1) return 'プレミアム・PH';
+  const third = totalFloors/3;
+  if(floor <= third) return '低層';
+  if(floor <= third*2) return '中層';
+  return '高層';
+}
 
 const MARKET_SITES = [
   { key:'SUUMO', label:'SUUMO', urlFn: q=> `https://www.google.com/search?q=site:suumo.jp+${q}` },
@@ -1557,180 +1351,21 @@ const MARKET_SITES = [
   { key:"LIFULL HOME'S", label:"LIFULL HOME'S", urlFn: q=> `https://www.google.com/search?q=site:homes.co.jp+${q}` }
 ];
 
-const MARKET_LAYOUTS = ['1R','1LDK','2LDK','3LDK','4LDK~'];
-/* ご指定の方角一覧に「南」が含まれていなかったため、抜け漏れ防止のため追加しています。不要であれば教えてください。 */
-const MARKET_DIRECTIONS = ['北','北東','東','南東','南','南西','西','北西'];
-const SQM_BUCKETS = ['-30','30-40','40-50','50-60','60-70','70-80','80-90','90-100','100-120','120-140','140-160','160-180','180-200','200-'];
-/* ご指定の階数レンジに「40-50」が抜けていたため、抜け漏れ防止のため追加しています。不要であれば教えてください。 */
-const FLOOR_BUCKETS = ['0-10','10-20','20-30','30-40','40-50','50-'];
-
-function bucketOf(value, buckets){
-  if(value===null || value===undefined || isNaN(value)) return null;
-  for(const b of buckets){
-    if(b.startsWith('-')){ if(value < Number(b.slice(1))) return b; }
-    else if(b.endsWith('-')){ if(value >= Number(b.slice(0,-1))) return b; }
-    else { const [lo,hi] = b.split('-').map(Number); if(value>=lo && value<hi) return b; }
-  }
-  return null;
-}
-
-function defaultMarketFilters(){
-  return {
-    sqm: SQM_BUCKETS.slice(),
-    layout: MARKET_LAYOUTS.slice(),
-    floor: FLOOR_BUCKETS.slice(),
-    direction: MARKET_DIRECTIONS.slice(),
-    corner: ['角部屋','角部屋でない']
-  };
-}
-/* state.marketFilters には配列(JSON保存可能)で保持し、画面操作用に毎回Setへ変換する。
-   Setのまま保存するとJSON化で内容が失われるため、変更のたびに配列へ書き戻す。 */
-function ensureMarketFilters(){
-  if(!state.marketFilters) state.marketFilters = defaultMarketFilters();
-  return {
-    sqm: new Set(state.marketFilters.sqm||[]),
-    layout: new Set(state.marketFilters.layout||[]),
-    floor: new Set(state.marketFilters.floor||[]),
-    direction: new Set(state.marketFilters.direction||[]),
-    corner: new Set(state.marketFilters.corner||[])
-  };
-}
-function syncMarketFilters(filters){
-  state.marketFilters = {
-    sqm: Array.from(filters.sqm),
-    layout: Array.from(filters.layout),
-    floor: Array.from(filters.floor),
-    direction: Array.from(filters.direction),
-    corner: Array.from(filters.corner)
-  };
-}
-
-function buildCheckboxDropdown(label, options, selectedSet, onChange){
-  const wrap = el('div',{style:'position:relative;display:inline-block;'});
-  const btn = el('button',{class:'btn small', type:'button', style:'white-space:nowrap;'}, `${label}(${selectedSet.size}/${options.length})`);
-  const panel = el('div',{style:'display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:60;background:#fff;border:1px solid #CFCDC3;border-radius:6px;padding:8px;min-width:150px;box-shadow:0 4px 14px rgba(0,0,0,0.18);max-height:260px;overflow-y:auto;'});
-  const actionRow = el('div',{style:'display:flex;gap:6px;margin-bottom:6px;'});
-  const allBtn = el('button',{class:'btn small', type:'button', style:'flex:1;padding:2px 4px;font-size:11px;'}, '全て選択');
-  const noneBtn = el('button',{class:'btn small', type:'button', style:'flex:1;padding:2px 4px;font-size:11px;'}, '全て削除');
-  const checks = [];
-  function refreshLabel(){ btn.textContent = `${label}(${selectedSet.size}/${options.length})`; }
-  allBtn.addEventListener('click', (ev)=>{ ev.stopPropagation(); options.forEach(o=>selectedSet.add(o)); checks.forEach(cb=>cb.checked=true); refreshLabel(); onChange(); });
-  noneBtn.addEventListener('click', (ev)=>{ ev.stopPropagation(); selectedSet.clear(); checks.forEach(cb=>cb.checked=false); refreshLabel(); onChange(); });
-  actionRow.appendChild(allBtn); actionRow.appendChild(noneBtn);
-  panel.appendChild(actionRow);
-  options.forEach(o=>{
-    const row = el('label',{style:'display:flex;align-items:center;gap:6px;font-size:12px;padding:2px 0;cursor:pointer;color:#000;'});
-    const cb = el('input',{type:'checkbox'});
-    cb.checked = selectedSet.has(o);
-    cb.addEventListener('change', ()=>{
-      if(cb.checked) selectedSet.add(o); else selectedSet.delete(o);
-      refreshLabel();
-      onChange();
-    });
-    row.appendChild(cb); row.appendChild(document.createTextNode(String(o)));
-    panel.appendChild(row);
-    checks.push(cb);
-  });
-  btn.addEventListener('click', (ev)=>{
-    ev.stopPropagation();
-    const isOpen = panel.style.display==='block';
-    document.querySelectorAll('.market-filter-panel-open').forEach(p=>{ p.style.display='none'; p.classList.remove('market-filter-panel-open'); });
-    if(!isOpen){ panel.style.display='block'; panel.classList.add('market-filter-panel-open'); }
-  });
-  document.addEventListener('click', (ev)=>{ if(!wrap.contains(ev.target)){ panel.style.display='none'; panel.classList.remove('market-filter-panel-open'); } });
-  wrap.appendChild(btn); wrap.appendChild(panel);
-  return wrap;
-}
-
-/* ---- CSVインポート・エクスポート(比較物件) ---- */
-const MARKET_CSV_HEADERS = ['サイト','専有面積','間取り','価格','階数','方角','角','メモ','登録日'];
-function marketCompsToCSV(){
-  const lines = [MARKET_CSV_HEADERS.join(',')];
-  state.marketComps.forEach(c=>{
-    const row = [c.source||'', c.sqm??'', c.layout||'', c.price??'', c.floor??'', c.direction||'', c.corner?'1':'0', c.note||'', c.registeredAt||''];
-    lines.push(row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','));
-  });
-  return lines.join('\r\n');
-}
-function downloadMarketCSV(){
-  const csv = marketCompsToCSV();
-  const blob = new Blob(["\uFEFF"+csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = '比較物件一覧.csv';
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url), 1000);
-}
-function parseCSVLine(line){
-  const result = []; let cur=''; let inQ=false;
-  for(let i=0;i<line.length;i++){
-    const ch = line[i];
-    if(inQ){
-      if(ch==='"'){ if(line[i+1]==='"'){ cur+='"'; i++; } else inQ=false; }
-      else cur+=ch;
-    } else {
-      if(ch==='"') inQ=true;
-      else if(ch===','){ result.push(cur); cur=''; }
-      else cur+=ch;
-    }
-  }
-  result.push(cur);
-  return result;
-}
-function parseMarketCSV(text){
-  const lines = text.split(/\r\n|\n|\r/).filter(l=>l.trim()!=='');
-  if(lines.length<2) return [];
-  return lines.slice(1).map(line=>{
-    const [source, sqm, layout, price, floor, direction, corner, note, registeredAt] = parseCSVLine(line);
-    const sqmN = Number(sqm)||null;
-    const priceN = Number(price)||null;
-    const tsubo = sqmN>0 ? sqmN/3.30578 : 0;
-    return {
-      source: source||'その他', sqm:sqmN, layout: layout||'', price:priceN,
-      floor: floor? Number(floor): null, direction: direction||'', corner: corner==='1'||corner==='true',
-      note: note||'', registeredAt: registeredAt || new Date().toISOString().slice(0,10),
-      pricePerTsubo: (tsubo>0 && priceN) ? priceN/tsubo : null
-    };
-  }).filter(e=>e.sqm && e.price);
-}
-function importMarketCSV(ev, mode){
-  const file = ev.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e=>{
-    let parsed;
-    try{ parsed = parseMarketCSV(e.target.result); }
-    catch(err){ alert('CSVの読み込みに失敗しました。「CSV出力」フォーマットに合わせてご確認ください。'); return; }
-    if(parsed.length===0){ alert('有効なデータが見つかりませんでした。「CSV出力」フォーマットに合わせてご確認ください。'); return; }
-    if(mode==='overwrite') state.marketComps = parsed;
-    else state.marketComps = state.marketComps.concat(parsed);
-    saveState();
-    renderResults();
-  };
-  reader.readAsText(file, 'UTF-8');
-  ev.target.value = '';
-}
-
 function buildMarketResearchPage(){
-  const container = document.createDocumentFragment();
+  const wrap = document.createDocumentFragment();
 
-  container.appendChild(el('div',{style:'font-size:22px;font-weight:800;color:#1A1A18;margin:2px 0 8px;'}, '類似物件価格調査・整理'));
+  const { panel:pIntro, body:bIntro } = makePanel('現在売り出し価格試算(類似物件比較)');
+  bIntro.appendChild(el('p',{style:'font-size:12.5px;color:var(--ink-soft);line-height:1.7;margin:0 0 6px;'},
+    '各サイトで似た条件の部屋を探し、メモを取りながら比較物件を登録すると、㎡の近さと階層で分類して平均価格を試算します。'));
+  bIntro.appendChild(el('p',{style:'font-size:11.5px;color:var(--ink-soft);line-height:1.6;margin:0;background:#F5F5F2;padding:8px 10px;border-radius:6px;'},
+    '※利用規約・技術的制約により、各サイトから自動で情報を取得することはできません。検索結果はご自身の目で確認し、メモとして残してください。'));
+  wrap.appendChild(pIntro);
 
-  const bullets = el('ul',{style:'margin:0 0 16px;padding-left:20px;font-size:12.5px;color:#222;line-height:1.9;'});
-  const li1 = el('li',{}, 'マニュアルで物件価格を登録し、坪単価および売出価格の平均値を算出する簡易ツールです。');
-  const li2 = el('li',{}, '平均値は、単純平均、面積補正、加重平均の３つを算出します。');
-  const li3 = el('li',{});
-  li3.innerHTML = '「㎡近似物件のみ集計」は、「基本」タブに入力した専有面積の<b>±15%以内</b>の物件だけを対象に集計します(例:専有面積が60㎡なら51〜69㎡、80㎡なら68〜92㎡の範囲の物件のみが対象になります)。「全物件平均」は、面積の近さを問わず、登録した全物件を対象に集計します。';
-  bullets.appendChild(li1); bullets.appendChild(li2); bullets.appendChild(li3);
-  container.appendChild(bullets);
-
-  const wrap = el('div',{class:'market-theme'});
-
-  /* ---------------- 主要サイトリンク ---------------- */
-  const { panel:pSearch, body:bSearch } = makePanel('主要サイトリンク');
+  const { panel:pSearch, body:bSearch } = makePanel('STEP1:サイトで検索してメモを取る');
   const searchQuery = state.propertyName || state.buildingName || '';
-  bSearch.appendChild(el('div',{class:'hint', style:'margin-bottom:8px;'}, '※「物件の基本情報」に入力したマンション名でGoogle検索'));
-  const siteBtnRow = el('div',{style:'display:flex;flex-wrap:wrap;gap:8px;'});
+  bSearch.appendChild(el('div',{class:'hint', style:'margin-bottom:8px;'},
+    searchQuery ? `検索キーワード:「${searchQuery}」(マンション名から自動設定)` : 'マンション名を「基本」タブで入力すると、検索キーワードが自動で設定されます。'));
+  const siteBtnRow = el('div',{style:'display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;'});
   MARKET_SITES.forEach(site=>{
     const btn = el('button',{class:'btn small'}, `${site.label}で検索`);
     btn.addEventListener('click', ()=>{
@@ -1740,82 +1375,46 @@ function buildMarketResearchPage(){
     siteBtnRow.appendChild(btn);
   });
   bSearch.appendChild(siteBtnRow);
+
+  if(!state.marketMemos) state.marketMemos = {};
+  MARKET_SITES.forEach(site=>{
+    const memoWrap = el('div',{class:'field'});
+    memoWrap.appendChild(el('label',{}, `${site.label} メモ`));
+    const ta = el('textarea',{rows:'2', style:'width:100%;padding:8px 9px;border:1px solid var(--line);border-radius:6px;background:#FDFDFC;font-size:13px;font-family:inherit;resize:vertical;'});
+    ta.value = state.marketMemos[site.key] || '';
+    ta.setAttribute('placeholder','例:3階 65㎡ 4,800万円、15階 68㎡ 5,600万円 など、見つけた部屋の情報をメモ');
+    ta.addEventListener('change', ()=>{ state.marketMemos[site.key] = ta.value; saveState(); });
+    memoWrap.appendChild(ta);
+    bSearch.appendChild(memoWrap);
+  });
   wrap.appendChild(pSearch);
 
-  /* ---------------- 物件登録 ---------------- */
-  const { panel:pInput, body:bInput } = makePanel('物件登録');
-
-  const csvRow = el('div',{style:'display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;'});
-  const csvOverwriteBtn = el('button',{class:'btn small'}, 'CSV取り込み(上書き)');
-  const csvAppendBtn = el('button',{class:'btn small'}, 'CSV取り込み(追加)');
-  const csvExportBtn = el('button',{class:'btn small'}, 'CSV出力');
-  const csvOverwriteFile = el('input',{type:'file', accept:'.csv,text/csv', style:'display:none;'});
-  const csvAppendFile = el('input',{type:'file', accept:'.csv,text/csv', style:'display:none;'});
-  csvOverwriteBtn.addEventListener('click', ()=>{
-    if(state.marketComps.length>0 && !confirm('登録済みの比較物件をすべて置き換えます。よろしいですか?')) return;
-    csvOverwriteFile.click();
-  });
-  csvOverwriteFile.addEventListener('change', ev=> importMarketCSV(ev,'overwrite'));
-  csvAppendBtn.addEventListener('click', ()=> csvAppendFile.click());
-  csvAppendFile.addEventListener('change', ev=> importMarketCSV(ev,'append'));
-  csvExportBtn.addEventListener('click', downloadMarketCSV);
-  csvRow.appendChild(csvOverwriteBtn); csvRow.appendChild(csvAppendBtn); csvRow.appendChild(csvExportBtn);
-  csvRow.appendChild(csvOverwriteFile); csvRow.appendChild(csvAppendFile);
-  bInput.appendChild(csvRow);
-  bInput.appendChild(el('div',{class:'hint', style:'margin-bottom:12px;'}, '・取り込むCSVは、CSV出力フォーマットに加工してください。'));
-
-  const formRow = el('div',{class:'market-form-row'});
-
+  const { panel:pInput, body:bInput } = makePanel('STEP2:メモをもとに比較物件を登録');
+  const rowA = el('div',{class:'row2'});
   const sourceSel = el('select');
   [...MARKET_SITES.map(s=>s.key), 'レインズ(会員のみ)', 'その他'].forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s; sourceSel.appendChild(o); });
-  formRow.appendChild(field('掲載サイト', sourceSel));
-
-  const sqmInput = el('input',{type:'number', step:'0.01', placeholder:`例:${state.floorArea}`, style:'width:90px;'});
-  formRow.appendChild(field('専有面積(㎡)', sqmInput));
-
-  const layoutSel = el('select');
-  MARKET_LAYOUTS.forEach(l=>{ const o=document.createElement('option'); o.value=l; o.textContent=l; layoutSel.appendChild(o); });
-  formRow.appendChild(field('間取り', layoutSel));
-
+  rowA.appendChild(field('掲載サイト', sourceSel));
+  const floorInput = el('input',{type:'number', placeholder:'例:15'});
+  rowA.appendChild(field('階数', floorInput));
+  bInput.appendChild(rowA);
+  const rowB = el('div',{class:'row2'});
+  const sqmInput = el('input',{type:'number', step:'0.01', placeholder:`例:${state.floorArea}`});
+  rowB.appendChild(field('専有面積(㎡)', sqmInput));
   const priceInput = createMoneyInput(()=>null, ()=>{}, '例:23000');
-  formRow.appendChild(field('価格(万円)', priceInput));
+  rowB.appendChild(field('価格(万円)', priceInput));
+  bInput.appendChild(rowB);
+  const noteInput = el('input',{type:'text', placeholder:'メモ(物件名・URLなど、任意)'});
+  bInput.appendChild(field('メモ', noteInput));
 
-  const floorInput = el('input',{type:'number', placeholder:'例:15', style:'width:70px;'});
-  formRow.appendChild(field('階数', floorInput));
+  bInput.appendChild(field('この建物の総階数(任意・階層分類に使用)', bindInput(el('input',{type:'number'}),'buildingTotalFloors',true)));
 
-  const dirWrap = el('div',{style:'display:flex;gap:6px;align-items:flex-end;'});
-  const directionSel = el('select');
-  MARKET_DIRECTIONS.forEach(d=>{ const o=document.createElement('option'); o.value=d; o.textContent=d; directionSel.appendChild(o); });
-  dirWrap.appendChild(field('方角', directionSel));
-  let cornerState = false;
-  const cornerBtn = el('button',{class:'btn small corner-toggle-btn', type:'button', style:'margin-bottom:1px;'}, '角部屋:OFF');
-  cornerBtn.addEventListener('click', ()=>{
-    cornerState = !cornerState;
-    cornerBtn.textContent = cornerState ? '角部屋:ON' : '角部屋:OFF';
-    cornerBtn.classList.toggle('on', cornerState);
-  });
-  dirWrap.appendChild(cornerBtn);
-  formRow.appendChild(dirWrap);
-
-  const noteInput = el('input',{type:'text', placeholder:'例:駅近・リフォーム済 等', style:'width:160px;'});
-  formRow.appendChild(field('メモ', noteInput));
-
-  bInput.appendChild(formRow);
-
-  const addBtn = el('button',{class:'btn primary', style:'margin-top:10px;'}, '+ この物件を追加');
+  const addBtn = el('button',{class:'btn primary'}, '+ この物件を追加');
   addBtn.addEventListener('click', ()=>{
     const floor = Number(floorInput.value)||null;
     const sqm = Number(sqmInput.value)||null;
     const price = Number(priceInput.value.replace(/[^0-9.\-]/g,''))||null;
     if(!sqm || !price){ alert('専有面積と価格は必須です。'); return; }
-    const tsubo = sqm / 3.30578;
-    const pricePerTsubo = tsubo>0 ? price / tsubo : null;
-    const entry = {
-      source: sourceSel.value, floor, sqm, layout: layoutSel.value, price,
-      direction: directionSel.value, corner: cornerState, note: noteInput.value,
-      registeredAt: new Date().toISOString().slice(0,10),
-      pricePerTsubo
-    };
+    const entry = { source: sourceSel.value, floor, sqm, price, note: noteInput.value };
     const isDup = state.marketComps.some(c=> c.source===entry.source && c.floor===entry.floor && c.sqm===entry.sqm && c.price===entry.price);
     if(isDup){ alert('同じ内容の物件が既に登録されています(重複のため追加しませんでした)。'); return; }
     state.marketComps.push(entry);
@@ -1825,531 +1424,105 @@ function buildMarketResearchPage(){
   bInput.appendChild(addBtn);
   wrap.appendChild(pInput);
 
-  /* ---------------- 登録物件一覧 ---------------- */
-  const { panel:pList, body:bList } = makePanel(`登録物件(${state.marketComps.length}件)`);
+  const { panel:pList, body:bList } = makePanel(`登録済みの比較物件(${state.marketComps.length}件)`);
   if(state.marketComps.length===0){
     bList.appendChild(el('p',{style:'font-size:12.5px;color:var(--ink-soft);'},'まだ物件が登録されていません。'));
   } else {
     const subjectSqm = Number(state.floorArea)||0;
-    const overviewMethod = state.marketOverviewMethod || 'simple';
-    const overviewThreshold = (state.marketOverviewThreshold||20)/100;
-    const overviewStats = marketGroupStats(state.marketComps, overviewMethod, subjectSqm);
-    const overviewAvg = overviewMethod==='simple' ? overviewStats.avgPrice : overviewStats.avgUnit;
     const table = el('table',{class:'tax-table'});
     const headTr = document.createElement('tr');
-    ['サイト','専有面積','間取り','価格','階数','方角','角','坪単価','登録日','メモ',''].forEach(h=>{
+    ['サイト','階数','階層区分','㎡','価格','対象範囲',''].forEach(h=>{
       const td = document.createElement('td'); td.style.fontWeight='700'; td.style.color='var(--ink-soft)'; td.style.fontSize='11px'; td.textContent=h; headTr.appendChild(td);
     });
     table.appendChild(headTr);
     state.marketComps.forEach((c,i)=>{
+      const tier = classifyFloorTier(c.floor, Number(state.buildingTotalFloors));
       const withinRange = subjectSqm>0 && Math.abs(c.sqm-subjectSqm)/subjectSqm <= 0.15;
       const tr = document.createElement('tr');
-      if(withinRange) tr.classList.add('match-row');
-
-      if(i === marketEditIndex){
-        const editSourceSel = el('select', {style:'font-size:12px;padding:3px;'});
-        [...MARKET_SITES.map(s=>s.key), 'レインズ(会員のみ)', 'その他'].forEach(s=>{
-          const o = document.createElement('option'); o.value=s; o.textContent=s;
-          if(s===c.source) o.selected = true;
-          editSourceSel.appendChild(o);
-        });
-        tr.appendChild(el('td',{}, editSourceSel));
-
-        const editSqm = el('input',{type:'number', step:'0.01', style:'width:64px;padding:3px;font-size:12px;'});
-        editSqm.value = c.sqm ?? '';
-        tr.appendChild(el('td',{}, editSqm));
-
-        const editLayoutSel = el('select', {style:'font-size:12px;padding:3px;'});
-        MARKET_LAYOUTS.forEach(l=>{ const o=document.createElement('option'); o.value=l; o.textContent=l; if(l===c.layout) o.selected=true; editLayoutSel.appendChild(o); });
-        tr.appendChild(el('td',{}, editLayoutSel));
-
-        const editPrice = el('input',{type:'number', style:'width:80px;padding:3px;font-size:12px;'});
-        editPrice.value = c.price ?? '';
-        tr.appendChild(el('td',{}, editPrice));
-
-        const editFloor = el('input',{type:'number', style:'width:56px;padding:3px;font-size:12px;'});
-        editFloor.value = c.floor ?? '';
-        tr.appendChild(el('td',{}, editFloor));
-
-        const editDirSel = el('select', {style:'font-size:12px;padding:3px;'});
-        MARKET_DIRECTIONS.forEach(d=>{ const o=document.createElement('option'); o.value=d; o.textContent=d; if(d===c.direction) o.selected=true; editDirSel.appendChild(o); });
-        tr.appendChild(el('td',{}, editDirSel));
-
-        const editCornerBtn = el('button',{class:'btn small corner-toggle-btn', type:'button', style:'padding:3px 6px;'}, c.corner?'ON':'OFF');
-        let editCorner = !!c.corner;
-        editCornerBtn.classList.toggle('on', editCorner);
-        editCornerBtn.addEventListener('click', ()=>{ editCorner=!editCorner; editCornerBtn.textContent = editCorner?'ON':'OFF'; editCornerBtn.classList.toggle('on', editCorner); });
-        tr.appendChild(el('td',{}, editCornerBtn));
-
-        tr.appendChild(el('td',{style:'font-size:11px;color:var(--ink-soft);'}, '(自動計算)'));
-        tr.appendChild(el('td',{style:'font-size:12px;'}, c.registeredAt || '-'));
-
-        const editNote = el('input',{type:'text', style:'width:80px;padding:3px;font-size:12px;'});
-        editNote.value = c.note || '';
-        tr.appendChild(el('td',{}, editNote));
-
-        const actionWrap = el('div',{style:'display:flex;gap:4px;'});
-        const saveBtn = el('button',{class:'btn small primary', style:'padding:3px 8px;'}, '保存');
-        const cancelBtn = el('button',{class:'btn small', style:'padding:3px 8px;'}, 'キャンセル');
-        saveBtn.addEventListener('click', ()=>{
-          const newSqm = Number(editSqm.value)||null;
-          const newPrice = Number(editPrice.value)||null;
-          if(!newSqm || !newPrice){ alert('専有面積と価格は必須です。'); return; }
-          const newTsubo = newSqm/3.30578;
-          state.marketComps[i] = {
-            ...c,
-            source: editSourceSel.value,
-            sqm: newSqm,
-            layout: editLayoutSel.value,
-            price: newPrice,
-            floor: editFloor.value===''? null : Number(editFloor.value),
-            direction: editDirSel.value,
-            corner: editCorner,
-            note: editNote.value,
-            pricePerTsubo: newTsubo>0 ? newPrice/newTsubo : null
-          };
-          marketEditIndex = null;
-          saveState();
-          renderResults();
-        });
-        cancelBtn.addEventListener('click', ()=>{ marketEditIndex = null; renderResults(); });
-        actionWrap.appendChild(saveBtn);
-        actionWrap.appendChild(cancelBtn);
-        tr.appendChild(el('td',{}, actionWrap));
-      } else {
-        const tsuboVal = c.pricePerTsubo ?? (c.sqm>0 ? c.price/(c.sqm/3.30578) : null);
-        const noteShort = (c.note||'').slice(0,5) + ((c.note||'').length>5 ? '…' : '');
-        const cols = [c.source, c.sqm+'㎡', c.layout||'-', null, c.floor??'-', c.direction||'-', c.corner?'角部屋':'-', tsuboVal? man(tsuboVal)+'/坪':'-', c.registeredAt||'-', noteShort||'-'];
-        cols.forEach((v,ci)=>{
-          const td = document.createElement('td'); td.style.fontSize='12px';
-          if(ci===3){
-            td.appendChild(document.createTextNode(man(c.price)));
-            if(overviewAvg>0){
-              const m = marketMetricOf(c, overviewMethod);
-              const diffRate = (m-overviewAvg)/overviewAvg;
-              if(Math.abs(diffRate)>=overviewThreshold){
-                const pct = Math.round(diffRate*100);
-                const badge = el('span',{style:`margin-left:5px;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700;color:#fff;background:${diffRate>0?'#C0503A':'#3A6FA8'};`},
-                  (pct>0?'+':'')+pct+'%');
-                td.appendChild(badge);
-              }
-            }
-          } else {
-            td.textContent = v;
-          }
-          tr.appendChild(td);
-        });
-        const actionWrap = el('div',{style:'display:flex;gap:4px;'});
-        const editBtn = el('button',{class:'btn small', style:'padding:3px 8px;'}, '修正');
-        editBtn.addEventListener('click', ()=>{ marketEditIndex = i; renderResults(); });
-        const delBtn = el('button',{class:'btn small', style:'padding:3px 8px;'}, '×');
-        delBtn.addEventListener('click', ()=>{ state.marketComps.splice(i,1); saveState(); renderResults(); });
-        actionWrap.appendChild(editBtn);
-        actionWrap.appendChild(delBtn);
-        tr.appendChild(el('td',{}, actionWrap));
-      }
+      if(withinRange) tr.style.background = '#CBE0F4';
+      [c.source, c.floor??'-', tier, c.sqm+'㎡', man(c.price), withinRange?'○対象':'×対象外'].forEach(v=>{
+        const td = document.createElement('td'); td.style.fontSize='12px'; td.textContent=v; tr.appendChild(td);
+      });
+      const delTd = document.createElement('td');
+      const delBtn = el('button',{class:'btn small', style:'padding:3px 8px;'}, '×');
+      delBtn.addEventListener('click', ()=>{ state.marketComps.splice(i,1); saveState(); renderResults(); });
+      delTd.appendChild(delBtn);
+      tr.appendChild(delTd);
       table.appendChild(tr);
     });
     bList.appendChild(table);
-    bList.appendChild(el('p',{style:'font-size:11px;color:var(--ink-soft);margin-top:6px;'},
-      '価格の横にあるバッジは、下の「登録物件の概要」で選んだ平均方式・しきい値をもとに、平均から大きく外れている物件を示します(赤=平均より高い、青=平均より低い)。'));
   }
   wrap.appendChild(pList);
 
-  /* ---------------- 登録物件の平均値算出 ---------------- */
   if(state.marketComps.length>0){
-    const { panel:pResult, body:bResult } = makePanel('登録物件の平均値算出');
-    const filters = ensureMarketFilters();
-
-    const aggSeg = el('div',{class:'segmented', style:'margin-bottom:10px;'});
-    [['near','㎡近似物件のみ集計'],['all','全物件平均']].forEach(([key,label])=>{
-      const btn = el('button',{}, label);
-      if((state.marketAggMode||'near')===key) btn.classList.add('active');
-      btn.addEventListener('click', ()=>{ state.marketAggMode = key; saveState(); updateSummary(); });
-      aggSeg.appendChild(btn);
-    });
-    bResult.appendChild(aggSeg);
-
-    const corrSeg = el('div',{class:'segmented', style:'margin-bottom:12px;'});
-    [['simple','単純平均'],['unitprice','面積補正(坪単価換算)'],['weighted','加重平均']].forEach(([key,label])=>{
-      const btn = el('button',{}, label);
-      if((state.marketCorrection||'simple')===key) btn.classList.add('active');
-      btn.addEventListener('click', ()=>{ state.marketCorrection = key; saveState(); updateSummary(); });
-      corrSeg.appendChild(btn);
-    });
-    bResult.appendChild(corrSeg);
-
-    const filterRow = el('div',{style:'display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;'});
-    filterRow.appendChild(buildCheckboxDropdown('専有面積', SQM_BUCKETS, filters.sqm, ()=>{ syncMarketFilters(filters); saveState(); updateSummary(); }));
-    filterRow.appendChild(buildCheckboxDropdown('間取り', MARKET_LAYOUTS, filters.layout, ()=>{ syncMarketFilters(filters); saveState(); updateSummary(); }));
-    filterRow.appendChild(buildCheckboxDropdown('階数', FLOOR_BUCKETS, filters.floor, ()=>{ syncMarketFilters(filters); saveState(); updateSummary(); }));
-    filterRow.appendChild(buildCheckboxDropdown('方角', MARKET_DIRECTIONS, filters.direction, ()=>{ syncMarketFilters(filters); saveState(); updateSummary(); }));
-    filterRow.appendChild(buildCheckboxDropdown('角部屋', ['角部屋','角部屋でない'], filters.corner, ()=>{ syncMarketFilters(filters); saveState(); updateSummary(); }));
-    bResult.appendChild(filterRow);
-
-    const dynamicWrap = el('div',{});
-    bResult.appendChild(dynamicWrap);
-
-    function updateSummary(){
-      dynamicWrap.innerHTML = '';
-      Array.from(aggSeg.children).forEach(btn=> btn.classList.toggle('active', btn.textContent===(state.marketAggMode==='all'?'全物件平均':'㎡近似物件のみ集計')));
-      Array.from(corrSeg.children).forEach(btn=>{
-        const map = {'単純平均':'simple','面積補正(坪単価換算)':'unitprice','加重平均':'weighted'};
-        btn.classList.toggle('active', map[btn.textContent]===state.marketCorrection);
+    const subjectSqm = Number(state.floorArea)||0;
+    const included = state.marketComps.filter(c=> subjectSqm>0 && Math.abs(c.sqm-subjectSqm)/subjectSqm <= 0.15);
+    const { panel:pResult, body:bResult } = makePanel('STEP3:階層別の平均価格(㎡近似物件のみ集計)');
+    if(included.length===0){
+      bResult.appendChild(el('p',{style:'font-size:12.5px;color:var(--ink-soft);'},
+        '専有面積が近い(±15%以内)物件がまだありません。対象範囲に入る物件を追加してください。'));
+    } else {
+      const tierGroups = {};
+      included.forEach(c=>{
+        const tier = classifyFloorTier(c.floor, Number(state.buildingTotalFloors));
+        tierGroups[tier] = tierGroups[tier] || [];
+        tierGroups[tier].push(c.price);
       });
-
-      const subjectSqm = Number(state.floorArea)||0;
-      const subjectTsubo = subjectSqm>0 ? subjectSqm/3.30578 : 0;
-      const aggMode = state.marketAggMode || 'near';
-      const corrMode = state.marketCorrection || 'simple';
-
-      const aggFiltered = aggMode==='all'
-        ? state.marketComps.slice()
-        : state.marketComps.filter(c=> subjectSqm>0 && Math.abs(c.sqm-subjectSqm)/subjectSqm <= 0.15);
-
-      const included = aggFiltered.filter(c=>{
-        const sB = bucketOf(c.sqm, SQM_BUCKETS);
-        const fB = bucketOf(c.floor, FLOOR_BUCKETS);
-        const cornerLabel = c.corner ? '角部屋' : '角部屋でない';
-        if(sB!==null && !filters.sqm.has(sB)) return false;
-        if(c.layout && !filters.layout.has(c.layout)) return false;
-        if(fB!==null && !filters.floor.has(fB)) return false;
-        if(c.direction && !filters.direction.has(c.direction)) return false;
-        if(!filters.corner.has(cornerLabel)) return false;
-        return true;
-      });
-
-      if(included.length===0){
-        dynamicWrap.appendChild(el('p',{style:'font-size:12.5px;color:var(--ink-soft);'},
-          '条件に一致する物件がありません。フィルターや集計モードを見直してください。'));
-        return;
-      }
-
-      const withUnit = included.map(c=>{
-        const tsubo = c.sqm>0 ? c.sqm/3.30578 : 0;
-        return { ...c, tsubo, unitPrice: tsubo>0 ? c.price/tsubo : 0 };
-      });
-
-      const n = withUnit.length;
-      const avgSqm = withUnit.reduce((a,c)=>a+c.sqm,0)/n;
-      const avgUnitPrice = withUnit.reduce((a,c)=>a+c.unitPrice,0)/n;
-      const simpleAvgPrice = withUnit.reduce((a,c)=>a+c.price,0)/n;
-      let weightedUnitPrice = avgUnitPrice;
-      if(subjectSqm>0){
-        const weights = withUnit.map(c=> 1/(Math.abs(c.sqm-subjectSqm)+1));
-        const wSum = weights.reduce((a,b)=>a+b,0);
-        weightedUnitPrice = withUnit.reduce((a,c,i)=>a+c.unitPrice*weights[i],0)/wSum;
-      }
-      const unitCorrectedPrice = subjectTsubo>0 ? avgUnitPrice*subjectTsubo : simpleAvgPrice;
-      const weightedCorrectedPrice = subjectTsubo>0 ? weightedUnitPrice*subjectTsubo : simpleAvgPrice;
-      const repPrice = corrMode==='simple' ? simpleAvgPrice : (corrMode==='unitprice' ? unitCorrectedPrice : weightedCorrectedPrice);
-      const isCorrected = corrMode!=='simple' && subjectSqm>0;
-
-      dynamicWrap.appendChild(el('p',{style:'font-size:12px;color:var(--ink-soft);margin:0 0 8px;'}, `集計対象:${n}件`));
-
       const table2 = el('table',{class:'tax-table'});
-      const headTr2 = document.createElement('tr');
-      [isCorrected?'占有面積換算':'平均㎡','平均坪単価','参考価格'].forEach(h=>{
-        const td = document.createElement('td'); td.style.fontWeight='700'; td.style.color='var(--ink-soft)'; td.style.fontSize='11px'; td.textContent=h; headTr2.appendChild(td);
+      Object.entries(tierGroups).forEach(([tier, prices])=>{
+        const avg = prices.reduce((a,b)=>a+b,0)/prices.length;
+        const tr = document.createElement('tr');
+        tr.appendChild(el('td',{}, `${tier}(${prices.length}件)`));
+        tr.appendChild(el('td',{}, man(avg)));
+        table2.appendChild(tr);
       });
-      table2.appendChild(headTr2);
+      const overallAvg = included.reduce((a,c)=>a+c.price,0)/included.length;
       const trTotal = document.createElement('tr');
-      trTotal.appendChild(el('td',{style:'font-weight:700;'}, (isCorrected ? subjectSqm : avgSqm).toFixed(1)+'㎡'));
-      trTotal.appendChild(el('td',{style:'font-weight:700;'}, man(avgUnitPrice)+'/坪'));
-      trTotal.appendChild(el('td',{style:'font-weight:700;'}, man(repPrice)));
+      trTotal.appendChild(el('td',{style:'font-weight:700;'}, `全体平均(${included.length}件)`));
+      trTotal.appendChild(el('td',{style:'font-weight:700;'}, man(overallAvg)));
       table2.appendChild(trTotal);
-      dynamicWrap.appendChild(table2);
+      bResult.appendChild(table2);
 
-      const methodNote = el('div',{style:'font-size:11.5px;color:var(--ink-soft);line-height:1.7;margin:8px 0 0;'});
-      if(corrMode==='simple'){
-        methodNote.textContent = '「単純平均」は登録物件の価格をそのまま等しい重みで平均したものです。専有面積の異なる物件が混在する場合、面積差の影響を受けます。';
-      } else if(corrMode==='unitprice'){
-        methodNote.textContent = subjectSqm>0
-          ? `「面積補正」は各物件の坪単価(価格÷坪数)を単純平均し、対象物件の専有面積(${subjectSqm}㎡=約${subjectTsubo.toFixed(2)}坪)換算に直した参考価格です。`
-          : '面積補正には「基本」タブで専有面積の入力が必要です。';
-      } else {
-        methodNote.textContent = subjectSqm>0
-          ? `「加重平均」は対象物件の専有面積(${subjectSqm}㎡)に近い物件ほど重みを大きくして坪単価を平均し、坪数換算した参考価格です(重み=1/(面積差+1))。`
-          : '加重平均には「基本」タブで専有面積の入力が必要です。';
-      }
-      dynamicWrap.appendChild(methodNote);
-
-      const theoryNote = el('div',{style:'font-size:11px;color:var(--ink-soft);line-height:1.7;margin:8px 0 0;background:#F0EFEA;padding:8px 10px;border-radius:6px;'});
-      theoryNote.innerHTML = '<b>加重平均についての考え方:</b> 単純平均は全物件を同じ重みで扱うため、専有面積が大きく異なる物件が混ざると歪みが生じます。より精度を高めるには、①対象物件の面積に近いほど重みを大きくする「近接度加重」、②直近の掲載・成約ほど重みを大きくする「鮮度加重」、③同じ棟・同じ属性の物件を優先する「属性一致加重」などが考えられます。現状は①の近接度加重(面積差の逆数)のみ実装しています。';
-      dynamicWrap.appendChild(theoryNote);
-
-      const applyBtn = el('button',{class:'btn primary market-apply-btn', style:'margin-top:10px;'}, `この参考価格(${man(repPrice)})を現在価格に反映`);
+      const applyBtn = el('button',{class:'btn primary', style:'margin-top:10px;'}, `この全体平均(${man(overallAvg)})を現在価格に反映`);
       applyBtn.addEventListener('click', ()=>{
-        state.currentPrice = Math.round(repPrice);
+        state.currentPrice = Math.round(overallAvg);
         state.viewMode = 'results';
         saveState();
+        const btn = document.getElementById('marketViewBtn');
+        if(btn) btn.textContent = '現在売り出し価格試算';
         render();
       });
-      dynamicWrap.appendChild(applyBtn);
+      bResult.appendChild(applyBtn);
     }
-    updateSummary();
     wrap.appendChild(pResult);
   }
 
-  /* ---------------- 登録物件の概要(ダッシュボード) ---------------- */
-  if(state.marketComps.length>0){
-    wrap.appendChild(buildMarketOverviewPanel());
-  }
-
-  container.appendChild(wrap);
-  return container;
-}
-
-function marketMetricOf(c, method){
-  const tsubo = c.sqm>0 ? c.sqm/3.30578 : 0;
-  const unitPrice = tsubo>0 ? c.price/tsubo : 0;
-  return (method||'simple')==='simple' ? c.price : unitPrice;
-}
-function marketGroupStats(list, method, subjectSqm){
-  const n = list.length;
-  const withUnit = list.map(c=>{ const tsubo=c.sqm>0?c.sqm/3.30578:0; return { c, price:c.price, unit: tsubo>0?c.price/tsubo:0 }; });
-  function avgOf(key){
-    if(method!=='weighted' || !subjectSqm){
-      return withUnit.reduce((a,it)=>a+it[key],0)/n;
-    }
-    const weights = list.map(c=> 1/(Math.abs((c.sqm||0)-subjectSqm)+1));
-    const wSum = weights.reduce((a,b)=>a+b,0);
-    return withUnit.reduce((a,it,i)=>a+it[key]*weights[i],0)/wSum;
-  }
-  return { n, avgPrice: n? avgOf('price') : 0, avgUnit: n? avgOf('unit') : 0 };
-}
-
-const MARKET_DIM_DEFS = [
-  { key:'floor', label:'階数帯', kind:'range', buckets:FLOOR_BUCKETS, getter:c=>bucketOf(c.floor, FLOOR_BUCKETS), chartType:'bar' },
-  { key:'sqm', label:'㎡帯', kind:'range', buckets:SQM_BUCKETS, getter:c=>bucketOf(c.sqm, SQM_BUCKETS), chartType:'bar' },
-  { key:'layout', label:'間取り', kind:'cat', buckets:MARKET_LAYOUTS, getter:c=>c.layout||null, chartType:'pie' },
-  { key:'direction', label:'方角', kind:'cat', buckets:MARKET_DIRECTIONS, getter:c=>c.direction||null, chartType:'pie' },
-  { key:'corner', label:'角部屋', kind:'cat', buckets:['角部屋でない','角部屋'], getter:c=>c.corner?'角部屋':'角部屋でない', chartType:'pie' }
-];
-
-/* 位置(表示順)に応じたグレー→青のグラデーション。
-   値の大小ではなく「並び順」で色を振るため、値が近くても同じ色にならない。
-   1番目は青と紛れない中間グレー、2番目以降を薄い青→濃い青に。 */
-function blueShade(t){
-  const light = [214,231,247], dark = [8,38,76];
-  const clamp = Math.min(1, Math.max(0, t));
-  const r = Math.round(light[0] + (dark[0]-light[0])*clamp);
-  const g = Math.round(light[1] + (dark[1]-light[1])*clamp);
-  const b = Math.round(light[2] + (dark[2]-light[2])*clamp);
-  return `rgb(${r},${g},${b})`;
-}
-const NEUTRAL_GRAY = '#ACA9A0';
-function positionalPalette(n){
-  if(n<=0) return [];
-  if(n===1) return ['#1E5FA8'];
-  const colors = [NEUTRAL_GRAY];
-  for(let i=1;i<n;i++){
-    const t = (i-1)/Math.max(1, n-2);
-    colors.push(blueShade(0.22 + t*0.72));
-  }
-  return colors;
-}
-
-/* 全体平均を、軸の左端から右端までまっすぐ引く水平線(カテゴリ軸の中心間だけを結ぶ
-   line データセットだと両端が届かないため、canvas に直接描画するプラグイン方式にしている) */
-function averageLinePlugin(value){
-  return {
-    id: 'avgLine_'+Math.random().toString(36).slice(2),
-    afterDraw(chart){
-      const yScale = chart.scales.y, xScale = chart.scales.x;
-      if(!yScale || !xScale) return;
-      const yPixel = yScale.getPixelForValue(value);
-      const ctx = chart.ctx;
-      ctx.save();
-      ctx.strokeStyle = '#1E5FA8';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(xScale.left, yPixel);
-      ctx.lineTo(xScale.right, yPixel);
-      ctx.stroke();
-      ctx.restore();
-    }
-  };
-}
-
-function buildMarketOverviewPanel(){
-  const hasDatalabels = !!window.ChartDataLabels;
-  if(hasDatalabels && !Chart._klRegistered){ Chart.register(window.ChartDataLabels); Chart._klRegistered = true; }
-
-  const { panel, body } = makePanel('登録物件の概要');
-  const comps = state.marketComps;
-  if(comps.length===0){
-    body.appendChild(el('p',{style:'font-size:12.5px;color:var(--ink-soft);'},'まだ物件が登録されていません。'));
-    return panel;
-  }
-
-  body.appendChild(el('p',{style:'font-size:12px;color:var(--ink-soft);line-height:1.7;margin:0 0 10px;'},
-    '登録済みの全物件(フィルター条件に関わらず全件)を対象に、属性別の件数・平均価格・平均坪単価をグラフ化します。平均から大きく外れる物件は、上の「登録物件」一覧にバッジで表示されます。'));
-
-  const methodSeg = el('div',{class:'segmented', style:'margin-bottom:8px;'});
-  [['simple','単純平均'],['weighted','加重平均(近接度)']].forEach(([key,label])=>{
-    const btn = el('button',{}, label);
-    if((state.marketOverviewMethod||'simple')===key) btn.classList.add('active');
-    btn.addEventListener('click', ()=>{ state.marketOverviewMethod = key; saveState(); update(); });
-    methodSeg.appendChild(btn);
-  });
-  body.appendChild(methodSeg);
-  body.appendChild(el('p',{style:'font-size:11px;color:var(--ink-soft);line-height:1.6;margin:0 0 10px;'},
-    'この平均方式は、価格・坪単価どちらの平均値の計算方法にも共通で使われます(単純=全物件を同じ重み、加重平均=「基本」タブの専有面積に近い物件ほど重視)。'));
-
-  const threshRow = el('div',{style:'display:flex;align-items:center;gap:8px;margin-bottom:6px;'});
-  threshRow.appendChild(el('span',{style:'font-size:12px;color:#000;'}, 'バッジのしきい値(平均からの乖離):'));
-  const threshSeg = el('div',{class:'segmented', style:'width:auto;flex:0 0 auto;'});
-  [10,20,30].forEach(v=>{
-    const btn = el('button',{style:'padding:6px 12px;flex:none;'}, `±${v}%`);
-    if((state.marketOverviewThreshold||20)===v) btn.classList.add('active');
-    btn.addEventListener('click', ()=>{ state.marketOverviewThreshold = v; saveState(); update(); });
-    threshSeg.appendChild(btn);
-  });
-  threshRow.appendChild(threshSeg);
-  body.appendChild(threshRow);
-  body.appendChild(el('p',{style:'font-size:11px;color:var(--ink-soft);line-height:1.6;margin:0 0 14px;'},
-    '上の「登録物件」一覧の価格バッジ(赤=平均より高い、青=平均より低い)は、この平均方式・しきい値をもとに表示されます。属性別グラフの内容には影響しません。'));
-
-  const dynamicWrap = el('div',{});
-  body.appendChild(dynamicWrap);
-
-  function update(){
-    dynamicWrap.innerHTML = '';
-    marketOverviewCharts.forEach(ch=>{ try{ ch.destroy(); }catch(e){} });
-    marketOverviewCharts = [];
-    Array.from(methodSeg.children).forEach(btn=>{
-      const map = {'単純平均':'simple','加重平均(近接度)':'weighted'};
-      btn.classList.toggle('active', map[btn.textContent]===state.marketOverviewMethod);
-    });
-    Array.from(threshSeg.children).forEach(btn=>{
-      btn.classList.toggle('active', btn.textContent===`±${state.marketOverviewThreshold}%`);
-    });
-
-    const subjectSqm = Number(state.floorArea)||0;
-    const method = state.marketOverviewMethod || 'simple';
-    const overallStats = marketGroupStats(comps, method, subjectSqm);
-
-    const grid = el('div',{style:'display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;'});
-    MARKET_DIM_DEFS.forEach(dim=>{
-      const groups = {};
-      dim.buckets.forEach(b=> groups[b] = []);
-      comps.forEach(c=>{
-        const b = dim.getter(c);
-        if(b!==null && groups[b]) groups[b].push(c);
-      });
-      const activeBuckets = dim.buckets.filter(b=> groups[b].length>0);
-      if(activeBuckets.length===0) return;
-
-      const cell = el('div',{style:'border:1px solid #CFCDC3;border-radius:8px;padding:10px;'});
-      cell.appendChild(el('div',{style:'font-size:12.5px;font-weight:700;color:#000;margin-bottom:6px;'}, `${dim.label}別`));
-
-      const chartsRow = el('div',{style:'display:flex;flex-direction:column;gap:10px;'});
-
-      const counts = activeBuckets.map(b=> groups[b].length);
-      const groupStatsList = activeBuckets.map(b=> marketGroupStats(groups[b], method, subjectSqm));
-      const avgPrices = groupStatsList.map(s=>s.avgPrice);
-      const avgUnits = groupStatsList.map(s=>s.avgUnit);
-      const avgCountLine = comps.length / activeBuckets.length;
-      const palette = positionalPalette(activeBuckets.length);
-
-      const countCanvasWrap = el('div',{style:'height:170px;'});
-      const countCanvas = el('canvas',{});
-      countCanvasWrap.appendChild(countCanvas);
-      const countLabel = el('div',{style:'font-size:11px;'});
-      countLabel.appendChild(el('span',{style:'color:#000;font-weight:700;'}, '件数 '));
-      countLabel.appendChild(el('span',{style:'color:#1E5FA8;font-weight:700;'},
-        `(全体平均 ${avgCountLine.toFixed(1)}件/区分、全${comps.length.toLocaleString()}件)`));
-      chartsRow.appendChild(countLabel);
-      chartsRow.appendChild(countCanvasWrap);
-
-      const priceCanvasWrap = el('div',{style:'height:190px;'});
-      const priceCanvas = el('canvas',{});
-      priceCanvasWrap.appendChild(priceCanvas);
-      const priceLabel = el('div',{style:'font-size:11px;'});
-      priceLabel.appendChild(el('span',{style:'color:#000;font-weight:700;'}, '平均単価 '));
-      priceLabel.appendChild(el('span',{style:'color:#1E5FA8;font-weight:700;'},
-        `(全体平均 ${man(overallStats.avgPrice)}、${man(overallStats.avgUnit)}/坪)`));
-      chartsRow.appendChild(priceLabel);
-      chartsRow.appendChild(priceCanvasWrap);
-
-      cell.appendChild(chartsRow);
-      grid.appendChild(cell);
-
-      if(dim.chartType==='pie'){
-        marketOverviewCharts.push(new Chart(countCanvas, {
-          type:'pie',
-          data:{ labels:activeBuckets, datasets:[{ data:counts, backgroundColor:palette,
-            datalabels: hasDatalabels ? { color:'#fff', font:{size:10,weight:'700'}, formatter:(v)=>v.toLocaleString() } : undefined }] },
-          options:{ maintainAspectRatio:false, plugins:{ legend:{ position:'right', labels:{ font:{size:10}, color:'#000' } } } }
-        }));
-      } else {
-        const maxCount = Math.max(...counts, avgCountLine);
-        marketOverviewCharts.push(new Chart(countCanvas, {
-          type:'bar',
-          data:{ labels:activeBuckets, datasets:[
-            { data:counts, backgroundColor:palette,
-              datalabels: hasDatalabels ? { display:true, anchor:'end', align:'top', color:'#000', font:{size:10,weight:'700'},
-                formatter:(v)=>Number(v).toLocaleString() } : undefined }
-          ]},
-          options:{ maintainAspectRatio:false, plugins:{ legend:{ display:false } },
-            scales:{ x:{ ticks:{ font:{size:9}, color:'#000' } },
-              y:{ ticks:{ display:false }, grid:{ color:'#EDEBE5' }, beginAtZero:true, suggestedMax:maxCount*1.3 } } },
-          plugins:[ averageLinePlugin(avgCountLine) ]
-        }));
-      }
-
-      const maxPrice = Math.max(...avgPrices, overallStats.avgPrice);
-      marketOverviewCharts.push(new Chart(priceCanvas, {
-        type:'bar',
-        data:{ labels:activeBuckets, datasets:[
-          { data:avgPrices.map(v=>Math.round(v)), backgroundColor:palette,
-            datalabels: hasDatalabels ? {
-              display:true, anchor:'end', align:'top', color:'#000', font:{size:10,weight:'700'}, textAlign:'center',
-              formatter:(v,ctx)=>{
-                const unit = avgUnits[ctx.dataIndex];
-                return [Number(v).toLocaleString(), `(${Math.round(unit).toLocaleString()}万円/坪)`];
-              }
-            } : undefined }
-        ]},
-        options:{ maintainAspectRatio:false, plugins:{ legend:{ display:false } },
-          scales:{ x:{ ticks:{ font:{size:9}, color:'#000' } },
-            y:{ ticks:{ display:false }, grid:{ color:'#EDEBE5' }, beginAtZero:true, suggestedMax:maxPrice*1.4 } } },
-        plugins:[ averageLinePlugin(Math.round(overallStats.avgPrice)) ]
-      }));
-    });
-    dynamicWrap.appendChild(grid);
-  }
-
-  update();
-  return panel;
+  return wrap;
 }
 
 function buildResults(){
-
   const wrap = document.createDocumentFragment();
   const result = runFullCalculation(state);
   const replacement = simulateReplacement(state, result);
 
-  const marketLinkBtn = el('button',{class:'btn small mobile-only', style:'width:100%;margin-bottom:10px;'}, '現在の売り出し価格調査・整理(WEB)を開く');
+  const marketLinkBtn = el('button',{class:'btn small mobile-only', style:'width:100%;margin-bottom:10px;'}, '現在売り出し価格試算を開く');
   marketLinkBtn.addEventListener('click', toggleMarketView);
   wrap.appendChild(marketLinkBtn);
 
   const { panel:p1, body:b1 } = makePanel('手取り額サマリー(3パターン比較)');
-  const elig = result.replacementEligibility;
   const grid = el('div',{class:'summary-grid'});
-  const recommendNow = !elig.eligible ? 'plan3000' : (result.netCash.plan3000 >= result.netCash.deferred ? 'plan3000' : 'deferred');
+  const recommendNow = result.netCash.plan3000 >= result.netCash.deferred ? 'plan3000' : 'deferred';
   const futureCardVal = !state.unlocked ? null
     : (replacement
-        ? man(Math.min(replacement.routeA.lifetimeTax, replacement.eligible ? replacement.routeB.lifetimeTax : replacement.routeA.lifetimeTax)) + '(生涯合計税額)'
+        ? man(Math.min(replacement.routeA.lifetimeTax, replacement.routeB.lifetimeTax)) + '(生涯合計税額)'
         : man(result.deferredGain) + '(繰延譲渡益)');
   const cards = [
-    ['3,000万円控除を使う場合', man(result.netCash.plan3000), recommendNow==='plan3000', true],
-    ['買換え特例を使う場合', elig.eligible ? man(result.netCash.deferred) : '利用不可', recommendNow==='deferred', elig.eligible],
-    ['将来影響考慮(参考)', futureCardVal, false, true]
+    ['3,000万円控除を使う場合', man(result.netCash.plan3000), recommendNow==='plan3000'],
+    ['買換え特例を使う場合', man(result.netCash.deferred), recommendNow==='deferred'],
+    ['将来影響考慮(参考)', futureCardVal, false]
   ];
-  cards.forEach(([lbl,val,reco,usable])=>{
-    const c = el('div',{class:'sum-card'+(reco?' reco':'')+(usable===false?' disabled':'')});
+  cards.forEach(([lbl,val,reco])=>{
+    const c = el('div',{class:'sum-card'+(reco?' reco':'')});
     c.appendChild(el('div',{class:'lbl'},lbl+(reco?' ★':'')));
     c.appendChild(el('div',{class:'val'+(val===null?' blurred':'')}, val===null ? '●●●万円' : val));
     grid.appendChild(c);
@@ -2357,19 +1530,6 @@ function buildResults(){
   b1.appendChild(grid);
   b1.appendChild(el('p',{style:'font-size:11px;color:var(--ink-soft);margin:8px 0 0;line-height:1.6;'},
     '※1・2枚目は「今回の売却だけ」を見た場合の手取り額の比較です。★は今回時点で有利な方。3枚目は、住み替え先を将来売却するところまで見込んだ場合の判断材料です。'));
-
-  const eligBox = el('div',{style:`margin-top:10px;padding:10px 12px;border-radius:6px;font-size:12px;line-height:1.8;
-    background:${elig.eligible ? '#EAF3E8' : '#F8ECE8'}; border:1px solid ${elig.eligible ? '#BFDCC0' : '#E4C4BA'};`});
-  eligBox.appendChild(el('div',{style:`font-weight:700;color:${elig.eligible?'#2E6B3E':'#A6432F'};`},
-    `買換え特例(特定の居住用財産の買換え特例)は、入力条件では${elig.eligible ? '利用できます' : '利用できません'}`));
-  eligBox.appendChild(el('div',{style:'margin-top:4px;color:var(--ink-soft);'},
-    `判定基準:譲渡価格が1億円以下(現在の試算:${man(result.salePrice)}/上限:${man(REPLACEMENT_SALE_PRICE_CAP_MAN)}) かつ 所有期間が10年超(現在の試算:${result.holdingYears}年)`));
-  if(!elig.eligible){
-    elig.reasons.forEach(r=> eligBox.appendChild(el('div',{style:'margin-top:2px;color:#A6432F;'}, `・${r}`)));
-  }
-  eligBox.appendChild(el('div',{style:'margin-top:6px;color:var(--ink-soft);'},
-    '※この他にも、居住期間10年以上・買換え資産の床面積要件・親族間売買でないこと等の要件があり、本シミュレーターでは自動判定していません。最終的な適用可否は税理士または国税庁サイトでご確認ください。'));
-  b1.appendChild(eligBox);
   wrap.appendChild(p1);
 
   if(!state.unlocked){
@@ -2453,7 +1613,7 @@ function buildResults(){
       ['税額(3,000万円控除適用)合計', man(result.detail3000.total)],
       ['　うち所得税(復興税込)', man(result.detail3000.income)],
       ['　うち住民税', man(result.detail3000.resident)],
-      ['税額(買換え特例=課税繰延)', elig.eligible ? man(result.detailDeferred.total) : man(result.detailDeferred.total)+'(※要件を満たさず利用不可)']
+      ['税額(買換え特例=課税繰延)', man(result.detailDeferred.total)]
     ];
     rowsR.forEach(([k,v])=>{
       const tr = document.createElement('tr');
@@ -2469,17 +1629,13 @@ function buildResults(){
 
     const { panel:p2b, body:b2b } = makePanel(replacement ? '住み替え先を含めた生涯合計納税額の比較' : '買換え特例を選んだ場合の将来影響(参考)');
     if(replacement){
-      if(!replacement.eligible){
-        b2b.appendChild(el('p',{style:'font-size:12.5px;color:#A6432F;line-height:1.7;margin:0 0 8px;font-weight:500;'},
-          '※今回の売却は買換え特例の利用要件を満たさないため、ルートB(買換え特例)は参考値です。実際には選択できません。'));
-      }
       b2b.appendChild(el('p',{style:'font-size:12.5px;color:var(--ink-soft);line-height:1.7;margin:0 0 10px;'},
         `${state.nextHoldingYears}年後に住み替え先を売却すると仮定した場合の、生涯トータルの納税額を比較しました。`));
       const cmpTable = el('table',{class:'tax-table'});
       const cmpRows = [
         ['ルートA:今回3,000万円控除を使う', ''],
         ['　生涯合計税額', man(replacement.routeA.lifetimeTax)],
-        ['ルートB:今回買換え特例を使う'+(replacement.eligible?'':'(利用不可・参考)'), ''],
+        ['ルートB:今回買換え特例を使う', ''],
         ['　生涯合計税額', man(replacement.routeB.lifetimeTax)]
       ];
       cmpRows.forEach(([k,v])=>{
@@ -2939,15 +2095,11 @@ function renderStepbar(){
   bar.innerHTML = "";
   for(let i=1;i<=6;i++){
     const b = el('button',{}, STEP_LABELS[i-1]);
-    if(i===state.step && state.viewMode!=='market') b.classList.add('active');
+    if(i===state.step) b.classList.add('active');
     else if(i<state.step) b.classList.add('done');
-    b.addEventListener('click', ()=>{ state.viewMode='results'; state.step=i; saveState(); render(); window.scrollTo(0,0); });
+    b.addEventListener('click', ()=>{ state.step=i; saveState(); render(); window.scrollTo(0,0); });
     bar.appendChild(b);
   }
-  const researchBtn = el('button',{class:'stepbar-research-btn'}, '調査');
-  if(state.viewMode==='market') researchBtn.classList.add('active');
-  researchBtn.addEventListener('click', ()=>{ toggleMarketView(); window.scrollTo(0,0); });
-  bar.appendChild(researchBtn);
 }
 
 function renderPCNav(){
@@ -2961,18 +2113,7 @@ function renderPCNav(){
       if(target && target.scrollIntoView) target.scrollIntoView({behavior:'smooth', block:'start'});
     });
     nav.appendChild(btn);
-    if(cat.key==='sale'){
-      const researchBtn = el('button',{class:'btn small market-nav-btn'}, '調査');
-      researchBtn.addEventListener('click', toggleMarketView);
-      nav.appendChild(researchBtn);
-    }
   });
-}
-
-function buildBottomRunButton(){
-  const btn = el('button',{class:'btn primary', style:'margin-top:4px;'}, 'シミュレーション実行(結果を更新)');
-  btn.addEventListener('click', runSimulation);
-  return btn;
 }
 
 function renderSettings(){
@@ -2981,12 +2122,10 @@ function renderSettings(){
 
   if(isPC()){
     [buildBasicPanel(), buildPricePanel(), buildMaintenancePanel(),
-     buildUsagePanel(), buildSaleSettingsPanel(), buildBottomRunButton(), buildReplacementPanel()]
+     buildUsagePanel(), buildSaleSettingsPanel(), buildReplacementPanel()]
       .filter(Boolean).forEach(panel=> body.appendChild(panel));
   } else {
-    if(state.viewMode==='market'){
-      body.appendChild(buildMarketResearchPage());
-    } else if(state.step===6){ body.appendChild(buildResults()); }
+    if(state.step===6){ body.appendChild(state.viewMode==='market' ? buildMarketResearchPage() : buildResults()); }
     else { MOBILE_STEP_SECTIONS[state.step]().forEach(panel=> body.appendChild(panel)); }
   }
 }
@@ -3001,16 +2140,11 @@ function renderResults(){
   }
 }
 
-function runSimulation(){
-  state.viewMode = 'results';
-  saveState();
-  renderResults();
-}
-
 function toggleMarketView(){
   state.viewMode = state.viewMode==='market' ? 'results' : 'market';
-  if(state.viewMode!=='market') marketEditIndex = null;
   saveState();
+  const btn = document.getElementById('marketViewBtn');
+  if(btn) btn.textContent = state.viewMode==='market' ? 'シミュレーションに戻る' : '現在売り出し価格試算';
   render();
 }
 
