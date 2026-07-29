@@ -2051,13 +2051,7 @@ function makePanel(title, id){
    5. ヘッダーの物件サマリー
 ========================================================= */
 function updateHeaderSummary(){
-  const parts = [];
-  if(state.propertyName) parts.push(state.propertyName);
-  if(state.buildingName) parts.push(state.buildingName);
-  if(state.floorNumber) parts.push(`${state.floorNumber}F`);
-  if(state.direction) parts.push(state.direction);
-  if(state.isCornerUnit) parts.push('角');
-  const text = parts.join(' ');
+  const text = state.propertyName || '';
   const elPC = document.getElementById('propSummary');
   const elMobile = document.getElementById('propSummaryMobile');
   if(elPC) elPC.textContent = text;
@@ -4452,12 +4446,26 @@ function computeLoanBalanceAtElapsedMonthsFallback(s, elapsedMonths){
     : estimateLoanBalance(principal, rate, term, 'equal_payment', elapsedMonths);
   return bal!=null ? Math.max(0, bal) : 0;
 }
-// 売却時点(売却設定の年月)の残債。借入額・金利・返済期間が揃っていれば自動計算し、
+// 売却日(YYYY-MM-DD)を、KirinLoanEngineのymToOffsetと同じルール
+// (1日ならその月の返済が発生する前、2日以降はその月の返済が発生した後とみなして翌月扱い)で
+// 「実効年月(YYYY-MM)」に変換する。日割りの利息計算まではしていない(あくまで当月/翌月の二値判定)。
+function saleDateToEffectiveYM(dateStr){
+  if(!dateStr) return null;
+  const parts = String(dateStr).split('-').map(Number);
+  if(parts.length<2 || isNaN(parts[0]) || isNaN(parts[1])) return null;
+  let y = parts[0], m = parts[1], d = parts[2];
+  if(d && d > 1){
+    const next = new Date(y, m-1+1, 1);
+    y = next.getFullYear(); m = next.getMonth()+1;
+  }
+  return `${y}-${String(m).padStart(2,'0')}`;
+}
+// 売却時点(売却設定の年月日)の残債。借入額・金利・返済期間が揃っていれば自動計算し、
 // 揃っていなければ手入力の「売却時点の残債」欄の値を使う。
 function resolveLoanBalanceForSale(s){
   const saleYear = getSaleYear(s);
-  const saleMonth = s.saleDate ? (new Date(s.saleDate).getMonth()+1) : 1;
-  const saleYM = `${saleYear}-${String(saleMonth).padStart(2,'0')}`;
+  const saleYM = s.saleDate ? saleDateToEffectiveYM(s.saleDate) : `${saleYear}-01`;
+  const [saleYMYear, saleYMMonth] = saleYM.split('-').map(Number);
   // ①(住宅ローン返済シミュレーター)で繰り上げ返済が設定・書き出されている場合は、
   // その調整後の残高をそのまま使う(baikyaku側で繰り上げ返済のロジックを複製しない)。
   if(s.loanPrepayAdjustedSchedule){
@@ -4473,7 +4481,7 @@ function resolveLoanBalanceForSale(s){
   }
   if(hasFullLoanSchedule(s)){
     const start = loanStartYearMonth(s);
-    const elapsedMonths = (saleYear-start.y)*12 + (saleMonth-start.m);
+    const elapsedMonths = (saleYMYear-start.y)*12 + (saleYMMonth-start.m);
     return Math.round(computeLoanBalanceAtElapsedMonthsFallback(s, elapsedMonths)*10)/10;
   }
   return Number(s.loanBalance)||0;

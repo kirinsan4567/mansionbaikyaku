@@ -2069,13 +2069,16 @@ function render(){
       summaryHtml = `借入金 ${fmt(core.loan1)}万円／自己資金(頭金) ${fmt(core.down1)}万円`;
     } else if(s.group==='val'){
       const snap = s.snap;
-      const calc = computeValuationSnapshot(snap.elapsed, snap.price, core.base);
+      // 0年後(購入時点)の時価評価が未入力(0円)の場合は、時価が無いのではなく
+      // 「まだ入力していないだけ」と考えられるため、購入価格をそのまま時価とみなす。
+      const snapPrice = (snap.elapsed===0 && !(snap.price>0)) ? core.price1 : snap.price;
+      const calc = computeValuationSnapshot(snap.elapsed, snapPrice, core.base);
       const {baseShown, increase} = splitNetWorth(calc.cash+calc.sec, core.netWorthBase);
       ds = [
         {label:'有価証券等', data:[calc.sec, null], backgroundColor:COLORS.sec, group:'asset'},
         {label:'現預金', data:[calc.cash, null], backgroundColor:COLORS.cash, group:'asset'},
         {label:'その他資産(車等)', shortLabel:'その他資産', data:[core.otherAssets>0?core.otherAssets:null, null], backgroundColor:COLORS.other, group:'asset'},
-        {label:'不動産', data:[snap.price, null], backgroundColor:COLORS.realestate, group:'asset'},
+        {label:'不動産', data:[snapPrice, null], backgroundColor:COLORS.realestate, group:'asset'},
         {label:'金融資産', data:[null, baseShown+core.otherAssets], backgroundColor:COLORS.finAsset, group:'equity', bracketGroups:['homeEquity']},
         {label:'金融資産(増加分)', data:[null, increase>0?increase:null], backgroundColor:COLORS.finAssetIncrease, group:'equity', bracketGroups:['homeEquity']},
         {label:'自己資金(頭金)', shortLabel:'頭金', data:[null, core.down1], backgroundColor:COLORS.downOrig, group:'equity', bracketGroups:['homeEquity']},
@@ -2090,8 +2093,8 @@ function render(){
         ds.push({label:'譲渡所得税', data:[null, -saleTaxFromCash], backgroundColor:'#FFFFFF', group:'outflow', isOutflow:true});
         blankMirror = {fromValue:0, toValue:-(saleFeeFromCash+saleTaxFromCash), targetCol:0};
       }
-      total = snap.price + calc.sec + calc.cash + core.otherAssets;
-      summaryHtml = `値上がり ${fmt(calc.appreciation)}万円（保有${fmt(snap.elapsed)}年＝${calc.holdLong?'長期':'短期'}譲渡想定）<span style="color:var(--ink-soft);font-weight:400;">　※評価額(${fmt(snap.price)}万円)ベースの概算</span>`;
+      total = snapPrice + calc.sec + calc.cash + core.otherAssets;
+      summaryHtml = `値上がり ${fmt(calc.appreciation)}万円（保有${fmt(snap.elapsed)}年＝${calc.holdLong?'長期':'短期'}譲渡想定）<span style="color:var(--ink-soft);font-weight:400;">　※評価額(${fmt(snapPrice)}万円)ベースの概算</span>`;
       noteHtml = `含み益(税引後)は将来の納税額を除いた額です。含み益(将来納税額)${fmt(calc.tax)}万円は将来の納税に備えた金融資産内の見込み額で、保有中のため未実現・実際の現預金流出はまだ発生していません。「金融資産(増加分)」は②購入直後からの増加分です`;
     } else if(s.group==='sale'){
       const {baseShown, increase} = splitNetWorth(core.cashAtSaleFinal+core.secAtSaleFinal, core.netWorthBase);
