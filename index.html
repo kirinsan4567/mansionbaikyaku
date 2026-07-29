@@ -576,6 +576,13 @@ function buildCalculatedForSumikae(){
       salePrice: Math.round(result.salePrice),
       saleExpense: Math.round(result.saleExpense),
       saleDate: state.saleDate || null,
+      // すみかえNAVI「現居の金額設定」向け(すべて単位に注意：ここでは購入設定のまま=totalPriceは万円、
+      // maintenanceFee/repairFund/propertyTaxは円。すみかえNAVI側で万円に変換して取り込む)
+      totalPrice: Math.round(Number(state.totalPrice)||0),
+      contractDate: state.contractDate || null,
+      maintenanceFee: Math.round(Number(state.maintenanceFee)||0),
+      repairFund: Math.round(Number(state.repairFund)||0),
+      propertyTax: Math.round(Number(state.propertyTax)||0),
       label: buildFileNameBase().replace(/^data_/,''),
       exportedAt: Date.now()
     };
