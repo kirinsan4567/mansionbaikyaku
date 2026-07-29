@@ -434,6 +434,7 @@ header p{margin:0;color:var(--ink-soft);font-size:13.5px;}
 }
 .callout.gold{background:var(--gold-soft);border-color:var(--gold);color:#14315C;}
 .callout.danger{background:#F3DFD8;border:2px solid var(--clay);color:#7A3A2C;font-weight:700;}
+.num-input.input-error{border:2px solid #C0392B;background:#FDEDEB;}
 .alloc-box{
   margin-top:8px;
   font-size:11px;
@@ -990,6 +991,11 @@ function computeCore(){
   const cash0post = Math.max(0, cash0 - downCashAlloc - costCashAlloc);
   const sec0post = Math.max(0, sec0 - downSecAlloc - costSecAlloc);
 
+  // 頭金・購入諸費用に対して、現預金＋有価証券の合計が足りているかを判定する。
+  // 従来はclampAlloc/Math.max(0,...)で不足分を静かに0円に丸めてしまい、
+  // 資金が足りていないのに足りているように見えていた。
+  const shortfallAmount0 = Math.max(0, (down1 + cost1Abs) - (cash0 + sec0));
+
   // 購入直後（②以降）の資産の伸びは、頭金・諸費用を払い終えた後の残高が起点
   const base = {price1, buildingRatio, usefulLife, cost1, loan1, rate, term, sec0:sec0post, secAnnual, secYield, cash0:cash0post, cashAnnual, taxCredit, sellFeeRate, deduction3000, down1};
 
@@ -1079,7 +1085,7 @@ function computeCore(){
   return {
     price1, down1, loan1, cost1, rate, term, elapsed,
     sec0, cash0, otherAssets, netWorthBase: cash0post+sec0post,
-    downCashAlloc, downSecAlloc, costCashAlloc, costSecAlloc, cost1Abs,
+    downCashAlloc, downSecAlloc, costCashAlloc, costSecAlloc, cost1Abs, shortfallAmount0,
     buildingRatio, usefulLife, deduction3000, sellFeeRate, salePrice: saleValuationPrice,
     price3, buyFeeRate, cost3, downUse, loan3, buyFee3, feeShortfall, shortfallChoice, proceedsForReacq,
     liquidPre, saleSnap, sellFeeAtSale, capitalGainsTax3, residentTax3, nationalTax3, netSaleProceeds, liquidPoolAtSale,
@@ -1956,6 +1962,12 @@ function render(){
   const core = computeCore();
   const steps = buildStepList().filter(s => showState[s.group]);
 
+  // 頭金・購入諸費用が現預金＋有価証券で賄えない場合、該当の入力欄を赤枠でハイライトする
+  ['downAmount1','cash0','sec0'].forEach(id=>{
+    const inp = $(id);
+    if(inp) inp.classList.toggle('input-error', core.shortfallAmount0 > 0);
+  });
+
   // ---- build panel DOM ----
   Object.values(charts).forEach(c=>{ if(c) c.destroy(); });
   charts = {};
@@ -1965,6 +1977,7 @@ function render(){
   steps.forEach((s,idx)=>{
     let extra = '';
     if(s.group==='pre') extra = `
+      <div class="callout danger" id="calloutShortfall0_${idx}" style="display:none;"></div>
       <div class="alloc-box">
         <div class="alloc-title">頭金支払 ${fmt(core.down1)}万円</div>
         <div class="alloc-row"><label>現預金充当</label><input type="text" inputmode="decimal" class="alloc-input num-input" data-key="downCash" data-total="${core.down1}" value="${Math.round(core.downCashAlloc)}"><label>有価証券等売却益充当</label><input type="text" inputmode="decimal" class="alloc-input num-input" data-key="downSec" data-pair="downCash" data-total="${core.down1}" value="${Math.round(core.downSecAlloc)}"></div>
@@ -2049,6 +2062,9 @@ function render(){
         ds.push({label:'購入時諸費用', shortLabel:'諸費用', data:[null, -cost1Abs], backgroundColor:'#FFFFFF', group:'outflow', isOutflow:true});
         blankMirror = {fromValue:0, toValue:-cost1Abs, targetCol:0};
       }
+      if(core.shortfallAmount0 > 0){
+        ds.push({label:'不足金', data:[null, -core.shortfallAmount0], backgroundColor:'#C0392B', group:'shortfall', isShortfall:true});
+      }
       total = core.liquidPre;
       summaryHtml = cost1Abs > 0
         ? `頭金・購入諸費用に充てる前の資金です。下の赤枠は②への移行で既に支払われる購入時諸費用です`
@@ -2065,6 +2081,9 @@ function render(){
         {label:'自己資金(頭金)', shortLabel:'頭金', data:[null, core.down1], backgroundColor:COLORS.downOrig, group:'equity'},
         {label:'借入金', data:[null, core.loan1], backgroundColor:COLORS.loan, group:'debt'},
       ];
+      if(core.shortfallAmount0 > 0){
+        ds.push({label:'不足金', data:[null, -core.shortfallAmount0], backgroundColor:'#C0392B', group:'shortfall', isShortfall:true});
+      }
       total = core.price1 + core.base.sec0 + core.base.cash0 + core.otherAssets;
       summaryHtml = `借入金 ${fmt(core.loan1)}万円／自己資金(頭金) ${fmt(core.down1)}万円`;
     } else if(s.group==='val'){
@@ -2202,6 +2221,18 @@ function render(){
     }
 
     if(saleCallout) $(`calloutBreakdown_${idx}`).innerHTML = saleCallout;
+
+    if(s.group==='pre'){
+      const shortfallEl0 = $(`calloutShortfall0_${idx}`);
+      if(shortfallEl0){
+        if(core.shortfallAmount0 > 0){
+          shortfallEl0.style.display = 'block';
+          shortfallEl0.innerHTML = `⚠ 頭金・購入諸費用に対して${fmt(core.shortfallAmount0)}万円不足しています<br><span style="font-weight:400;">現預金＋有価証券をすべて充当してもなお資金が足りません。このままでは現居を予定通りに購入できません。①頭金を減らす、②現預金・有価証券を増やす、③購入価格・諸費用を見直す、のいずれかが必要です。</span>`;
+        } else {
+          shortfallEl0.style.display = 'none';
+        }
+      }
+    }
 
     if(reacqCallouts){
       const d = reacqCallouts;
