@@ -896,7 +896,12 @@ function extractLoanPlans(data){
       // 繰り上げ返済(あれば)：生の設定と、①側で既に計算済みの「反映後」の月次データ
       prepaySteps: Array.isArray(sch.prepaySteps) ? sch.prepaySteps : [],
       prepayAdjustedSchedule: (sch.prepayAdjustedSchedule && Array.isArray(sch.prepayAdjustedSchedule.labels))
-        ? sch.prepayAdjustedSchedule : null
+        ? sch.prepayAdjustedSchedule : null,
+      // 住宅ローン控除(⑥参考の計算に使用)
+      useDeduction: !!sch.useDeduction,
+      deductionRate: parseLooseNumber(sch.deductionRate),
+      deductionYears: parseLooseNumber(sch.deductionYears),
+      deductionLimit: parseLooseNumber(sch.deductionLimit)
     };
   });
   return out;
@@ -1077,6 +1082,12 @@ function showLoanImportModal(candidate){
         state.loanBonusValue = candidate.bonusValue || 0;
         state.loanBonusMonths = candidate.bonusMonths || [];
       }
+      // 住宅ローン控除(⑥参考の計算用)。使っていない/対象外の場合はrate等が0やnullになり、
+      // 計算結果が自動的に0円になるだけなので、ここで特別な条件分岐はしない。
+      state.loanUseDeduction = !!candidate.useDeduction;
+      state.loanDeductionRate = candidate.deductionRate || 0;
+      state.loanDeductionYears = candidate.deductionYears || 0;
+      state.loanDeductionLimit = candidate.deductionLimit || 0; // 円単位のまま保持(計算時に万円へ変換)
       saveState(); renderSettings(); if(isPC()) renderResults();
       overlay.remove();
       let msg = '住宅ローン返済シミュレーターのデータを反映しました。売却時点の残債は、売却設定の売却予定日に応じて自動計算されます。';
@@ -1190,7 +1201,9 @@ function applyLoanScheduleSelection(schedule){
       repayType: schedule.repayType,
       use5yr: schedule.use5yr, use125: schedule.use125, applyDelay: schedule.applyDelay,
       reviewMonths: schedule.reviewMonths,
-      bonusOn: schedule.bonusOn, bonusMode: schedule.bonusMode, bonusValue: schedule.bonusValue, bonusMonths: schedule.bonusMonths
+      bonusOn: schedule.bonusOn, bonusMode: schedule.bonusMode, bonusValue: schedule.bonusValue, bonusMonths: schedule.bonusMonths,
+      useDeduction: schedule.useDeduction, deductionRate: schedule.deductionRate,
+      deductionYears: schedule.deductionYears, deductionLimit: schedule.deductionLimit
     });
     return;
   }
@@ -1855,6 +1868,7 @@ function computeYearlyTable(s){
 
     const holding = holdingCostForYear(s, y, purchaseYear);
     holdingCostCumulative += holding.total;
+    const mortgageDeductionCumulative = computeMortgageDeductionCumulative(s, y);
 
     rows.push({
       year:y, price, pricePerTsubo, growthRateYoY, priceChange, priceChangeRate, priceChangePerTsubo,
@@ -1867,7 +1881,8 @@ function computeYearlyTable(s){
       loanBalanceThisYear, netCashPlan3000, settlementAfterTax, taxTotal3000: taxDetail3000.total,
       holdingManagement: holding.management, holdingRepair: holding.repair, holdingPropertyTax: holding.propertyTaxMan,
       holdingOther: holding.otherMan, holdingMajorRepair: holding.majorRepair, holdingInterest: holding.interest, holdingTotal: holding.total,
-      holdingCumulative: holdingCostCumulative
+      holdingCumulative: holdingCostCumulative,
+      mortgageDeductionCumulative
     });
     prevPrice = price;
   }
@@ -4075,6 +4090,9 @@ function renderYearlyTables(rows, saleYear){
       ['大規模修繕一時金', r=> r.holdingMajorRepair ? man(r.holdingMajorRepair) : '-'],
       ['金利負担(年間・概算)', r=> state.includeLoanInterestInHoldingCost ? man(r.holdingInterest) : '含めない設定'],
       ['保有コスト累計', r=>man(r.holdingCumulative)]
+    ]},
+    { key:'mortgagededuction', title:'⑥参考：住宅ローン控除還付(売却損益には影響しません)', refGroup:true, metrics:[
+      ['還付累計(その年に売った場合)', r=>man(r.mortgageDeductionCumulative)]
     ]}
   ];
   window.__yearlyTableGroupsForCSV = groups;
@@ -4538,6 +4556,32 @@ function loanBalanceForYear(s, year){
   const annualPaydown = (startLoan-endLoan)/Math.max(saleYear2-purchaseYear,1);
   const val = startLoan - annualPaydown*(year-purchaseYear);
   return Math.max(Math.round(val*10)/10, 0);
+}
+
+// 住宅ローン控除の累計還付額(万円)。借入開始年〜売却年の「前年」まで、各年末残高×控除率(年間上限あり)を合算する。
+// 住宅ローン控除は12/31時点の残高で決まり、月割り・日割りの按分は発生しない。
+// また売却する年は年末時点で既に転居しているため対象外(丸ごとカット。日割りにはしない)。
+// 控除を使っていない/データが無い/対象年数を超えている場合は、rate等が0になり自然に0円になるだけで、
+// 特別な条件分岐は設けていない。
+function computeMortgageDeductionCumulative(s, saleYearOverride){
+  const rate = Number(s.loanDeductionRate)||0;
+  const years = Math.max(0, Math.floor(Number(s.loanDeductionYears)||0));
+  const limitYen = Number(s.loanDeductionLimit)||0;
+  if(rate<=0 || years<=0 || limitYen<=0) return 0;
+  const start = loanStartYearMonth(s);
+  if(!start || !start.y) return 0;
+  const saleYear = saleYearOverride!=null ? saleYearOverride : getSaleYear(s);
+  const limitMan = limitYen/10000;
+  let total = 0;
+  for(let i=0; i<years; i++){
+    const y = start.y + i;
+    if(y >= saleYear) break; // 売却年は年末時点で居住していないため対象外
+    const endBalanceMan = loanBalanceForYear(s, y+1); // y年12月末 ≒ (y+1)年1月1日の残高
+    if(endBalanceMan <= 0) break; // 完済後は以降の年もすべて0円
+    // deductionLimitは控除額そのものの上限ではなく、計算に使う年末残高の上限(いわゆる借入限度額)
+    total += Math.min(endBalanceMan, limitMan) * rate;
+  }
+  return Math.round(total*10)/10;
 }
 
 let equityChartInstance = null;
