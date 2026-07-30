@@ -530,6 +530,20 @@ function buildBsModelPrefill(){
     }
   }
 
+  // 住宅ローン控除：BSモデルのE時価評価は複数年に及ぶため、単一の合計値ではなく
+  // 経過年数(購入年からの年数)ごとの累計額をスケジュールとして渡す。
+  // BSモデル側は「その年に売った場合」相当の累計額をそのまま現預金に加算する。
+  try{
+    const rows = computeYearlyTable(state);
+    const purchaseYearForSchedule = state.contractDate ? new Date(state.contractDate).getFullYear() : BASE_YEAR;
+    const schedule = {};
+    rows.forEach(r=>{
+      const elapsed = r.year - purchaseYearForSchedule;
+      if(elapsed>=0) schedule[elapsed] = r.mortgageDeductionCumulative;
+    });
+    if(Object.keys(schedule).length) p.mortgageDeductionByYear = schedule;
+  }catch(e){}
+
   return p;
 }
 
