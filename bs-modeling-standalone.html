@@ -173,7 +173,7 @@ header p{margin:0;color:var(--ink-soft);font-size:13.5px;}
   box-sizing:border-box;
 }
 .field .unit{font-size:11.5px;color:var(--ink-soft);white-space:nowrap;}
-/* 不動産売却益計算シミュレーターから自動的に引き継がれた入力欄 */
+/* 他のシミュレーターから引き継げる入力欄（取込前後を問わず常に色分け表示） */
 .field input.num-input.auto-filled{
   border:2px solid #14315C;
   background:#DCE9F5;
@@ -624,11 +624,11 @@ header p{margin:0;color:var(--ink-soft);font-size:13.5px;}
     <details class="group" open>
       <summary><span class="tag">A</span> 物件購入（現居）<button id="exampleBtn" type="button" title="例として現在の想定値をセット">サンプル</button></summary>
       <div class="group-body">
-        <div class="field"><label>購入価格（万円）</label><input type="text" inputmode="decimal" class="num-input" id="price1" value=""></div>
-        <div class="field"><label>頭金（万円）</label><input type="text" inputmode="decimal" class="num-input" id="downAmount1" value=""></div>
-        <div class="field"><label>建物価格割合（%）※減価償却用</label><input type="text" inputmode="decimal" class="num-input" id="buildingRatio" value=""></div>
-        <div class="field"><label>購入時諸費用（万円）</label><input type="text" inputmode="decimal" class="num-input" id="cost1" value=""></div>
-        <div class="field"><label>耐用年数（年・簡便法）</label><input type="text" inputmode="decimal" class="num-input" id="usefulLife" value=""></div>
+        <div class="field"><label>購入価格（万円）</label><input type="text" inputmode="decimal" class="num-input auto-filled" id="price1" value=""></div>
+        <div class="field"><label>頭金（万円）</label><input type="text" inputmode="decimal" class="num-input auto-filled" id="downAmount1" value=""></div>
+        <div class="field"><label>建物価格割合（%）※減価償却用</label><input type="text" inputmode="decimal" class="num-input auto-filled" id="buildingRatio" value=""></div>
+        <div class="field"><label>購入時諸費用（万円）</label><input type="text" inputmode="decimal" class="num-input auto-filled" id="cost1" value=""></div>
+        <div class="field"><label>耐用年数（年・簡便法）</label><input type="text" inputmode="decimal" class="num-input auto-filled" id="usefulLife" value=""></div>
         <div class="hint">登記費用・ローン事務費・修繕積立一括金・引越・家具家電等の合計。頭金・この諸費用は「購入前」の資金から支出されます</div>
       </div>
     </details>
@@ -636,8 +636,8 @@ header p{margin:0;color:var(--ink-soft);font-size:13.5px;}
     <details class="group">
       <summary><span class="tag">B</span> ローン条件（現居）</summary>
       <div class="group-body">
-        <div class="field"><label>金利（%・全期間固定と仮定）</label><input type="text" inputmode="decimal" class="num-input" id="rate" value=""></div>
-        <div class="field"><label>返済期間（年）</label><input type="text" inputmode="decimal" class="num-input" id="loanTerm" value=""></div>
+        <div class="field"><label>金利（%・全期間固定と仮定）</label><input type="text" inputmode="decimal" class="num-input auto-filled" id="rate" value=""></div>
+        <div class="field"><label>返済期間（年）</label><input type="text" inputmode="decimal" class="num-input auto-filled" id="loanTerm" value=""></div>
       </div>
     </details>
 
@@ -676,13 +676,13 @@ header p{margin:0;color:var(--ink-soft);font-size:13.5px;}
       <summary><span class="tag">F</span> 物件売却</summary>
       <div class="group-body">
         <div class="field" style="display:flex;gap:6px;align-items:flex-end;">
-          <div style="flex:0 0 56px;"><label>経過年数</label><input type="text" inputmode="decimal" class="num-input" id="elapsed" value=""></div>
-          <div style="flex:1;"><label>売却価格（万円）</label><input type="text" inputmode="decimal" class="num-input" id="salePrice" value=""></div>
+          <div style="flex:0 0 56px;"><label>経過年数</label><input type="text" inputmode="decimal" class="num-input auto-filled" id="elapsed" value=""></div>
+          <div style="flex:1;"><label>売却価格（万円）</label><input type="text" inputmode="decimal" class="num-input auto-filled" id="salePrice" value=""></div>
         </div>
         <div class="field toggle"><label>3,000万円特別控除を適用</label>
           <input type="checkbox" id="deduction3000" checked style="width:18px;height:18px;">
         </div>
-        <div class="field"><label>売却仲介手数料率（%）</label><input type="text" inputmode="decimal" class="num-input" id="sellFeeRate" value=""></div>
+        <div class="field"><label>売却仲介手数料率（%）</label><input type="text" inputmode="decimal" class="num-input auto-filled" id="sellFeeRate" value=""></div>
         <div class="hint">保有期間5年超＝長期譲渡（20.315%）／5年以下＝短期（39.63%）を自動判定</div>
       </div>
     </details>
@@ -690,9 +690,9 @@ header p{margin:0;color:var(--ink-soft);font-size:13.5px;}
     <details class="group">
       <summary><span class="tag">G</span> 住み替え先（2次取得）</summary>
       <div class="group-body">
-        <div class="field"><label>新居購入価格（万円）</label><input type="text" inputmode="decimal" class="num-input" id="price3" value=""></div>
-        <div class="field"><label>購入仲介手数料率（%）</label><input type="text" inputmode="decimal" class="num-input" id="buyFeeRate" value=""></div>
-        <div class="field"><label>新居購入時諸費用（万円）</label><input type="text" inputmode="decimal" class="num-input" id="cost3" value=""></div>
+        <div class="field"><label>新居購入価格（万円）</label><input type="text" inputmode="decimal" class="num-input auto-filled" id="price3" value=""></div>
+        <div class="field"><label>購入仲介手数料率（%）</label><input type="text" inputmode="decimal" class="num-input auto-filled" id="buyFeeRate" value=""></div>
+        <div class="field"><label>新居購入時諸費用（万円）</label><input type="text" inputmode="decimal" class="num-input auto-filled" id="cost3" value=""></div>
       </div>
     </details>
 
@@ -2381,7 +2381,6 @@ $('exampleBtn').addEventListener('click', (e)=>{
 $('clearBtn').addEventListener('click', ()=>{
   if(!confirm('全ての入力値を消去します。よろしいですか？')) return;
   document.querySelectorAll('.num-input').forEach(el=>{ el.value = ''; });
-  clearAutoFilledStyles();
   valSnapshots = [{id:1, elapsed:0, price:0}];
   nextValId = 2;
   renderValSnapshotInputs();
