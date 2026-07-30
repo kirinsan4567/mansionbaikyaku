@@ -1088,9 +1088,11 @@ function computeCore(){
   const useLoanForShortfall = feeShortfall > 0 && shortfallChoice === 'loan';
 
   const availableForDown = Math.max(0, proceedsAfterFees);
-  // 頭金欄が空欄の間は、現預金を温存した充当可能額を自動的にデフォルト値として使う
+  // 頭金欄が空欄の間は、現預金を温存した充当可能額を自動的にデフォルト値として使う。
+  // ただし新居価格(price3)が未入力(0円)の場合は、そもそも2次取得が発生していないので
+  // 頭金も0円のままにする(でないと購入していないのに頭金だけ積み上がってしまう)。
   const downPayUseRaw = String($('downPayUse').value||'').replace(/,/g,'').trim();
-  const downUse = downPayUseRaw==='' ? availableForDown : num('downPayUse');
+  const downUse = downPayUseRaw==='' ? (price3>0 ? availableForDown : 0) : num('downPayUse');
 
   // 「借入を増やす」を選んだ場合、諸費用の不足分をそのまま借入に上乗せする
   const extraLoanForShortfall = useLoanForShortfall ? feeShortfall : 0;
