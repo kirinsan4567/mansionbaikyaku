@@ -94,7 +94,7 @@ header p{margin:0;color:var(--ink-soft);font-size:13.5px;}
   height:100%;
 }
 .main{
-  padding:24px 28px 60px;
+  padding:12px 28px 60px;
   overflow-x:auto;
   overflow-y:auto;
   height:100%;
@@ -347,6 +347,12 @@ header p{margin:0;color:var(--ink-soft);font-size:13.5px;}
   font-size:12.5px;
   overflow-x:auto;
 }
+.panel-toggle-bar .toggle-checks{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  order:2;
+}
 .panel-toggle-bar label{
   display:flex;
   align-items:center;
@@ -356,13 +362,37 @@ header p{margin:0;color:var(--ink-soft);font-size:13.5px;}
   white-space:nowrap;
   flex:0 0 auto;
 }
-.panel-toggle-bar span.hint2{font-size:11px;color:var(--ink-soft);font-weight:400;margin-left:auto;}
+.panel-toggle-bar span.hint2{font-size:11px;color:var(--ink-soft);font-weight:400;margin-left:auto;order:3;white-space:nowrap;}
+@media (max-width:1100px){
+  .panel-toggle-bar{
+    flex-direction:column;
+    align-items:stretch;
+    overflow-x:visible;
+  }
+  .panel-toggle-bar span.hint2{
+    order:1;
+    margin-left:0;
+    white-space:normal;
+    text-align:left;
+  }
+  .panel-toggle-bar .toggle-checks{
+    order:2;
+    flex-wrap:wrap;
+    row-gap:8px;
+    column-gap:14px;
+  }
+  .panel-toggle-bar label{
+    flex:1 1 calc(33.333% - 10px);
+    white-space:normal;
+    line-height:1.3;
+  }
+}
 .json-btns{
   display:flex;
   flex-wrap:wrap;
   align-items:center;
   gap:6px;
-  margin-bottom:14px;
+  margin-bottom:4px;
 }
 .json-btns button{
   flex:1 1 auto;
@@ -530,21 +560,26 @@ header p{margin:0;color:var(--ink-soft);font-size:13.5px;}
   padding:16px 18px 20px;
   display:grid;
   grid-template-columns:repeat(3,1fr);
+  grid-template-rows:auto auto auto auto;
   gap:14px;
 }
 .jcard{
+  display:grid;
+  grid-template-rows:subgrid;
+  grid-row:span 4;
   border:1px solid var(--line);
   border-radius:10px;
   padding:12px 14px;
   background:#FCFBF8;
 }
+.jcard > *{ align-self:start; }
 .jcard h4{
   margin:0 0 8px;
   font-size:12px;
   color:var(--ink-soft);
   font-weight:700;
   letter-spacing:.03em;
-  min-height:34px;
+  align-self:start;
 }
 .jcard .big{
   font-family:'Shippori Mincho B1',serif;
@@ -584,7 +619,7 @@ header p{margin:0;color:var(--ink-soft);font-size:13.5px;}
   .mobile-tab-bar{
     display:flex;
     gap:6px;
-    margin-top:10px;
+    margin-top:4px;
   }
   .mobile-tab-btn{
     flex:1 1 auto;
@@ -779,7 +814,7 @@ header p{margin:0;color:var(--ink-soft);font-size:13.5px;}
         </div>
         <div class="jcard">
           <h4>Q2. 不足時：借入への上乗せ必要額</h4>
-          <div style="height:25px;"></div>
+          <div></div>
           <div class="big" id="loanTopup">—</div>
           <div class="sub" id="loanTopupDetail"></div>
         </div>
@@ -1949,9 +1984,10 @@ const allocState = {}; // downCash, costCash, reacqFeeCash, reacqCostCash -> use
 function renderToggleBar(steps){
   const groupLabels = {pre:'購入前', post:'購入直後', val:'時価評価', sale:'売却後★', reacq:'2次取得', waterfall:'手取り試算(ウォーターフォール)'};
   const groups = ['pre','post','val','sale','reacq','waterfall'];
-  $('toggleBar').innerHTML = groups.map(g=>`
+  $('toggleBar').innerHTML = `<span class="hint2">表示するパネルを自由に選べます</span>` +
+    `<div class="toggle-checks">` + groups.map(g=>`
     <label><input type="checkbox" class="toggle-cb" data-group="${g}" ${showState[g]?'checked':''}> ${groupLabels[g]}</label>
-  `).join('') + `<span class="hint2">表示するパネルを自由に選べます</span>`;
+  `).join('') + `</div>`;
   $('toggleBar').querySelectorAll('.toggle-cb').forEach(cb=>{
     cb.addEventListener('change', ()=>{
       showState[cb.dataset.group] = cb.checked;
@@ -2421,6 +2457,11 @@ function setMobileTab(tab){
   if(settingsBtn) settingsBtn.classList.toggle('active', tab==='settings');
   if(chartBtn) chartBtn.classList.toggle('active', tab==='chart');
   syncHeaderHeight();
+  if(tab==='chart'){
+    // 非表示(display:none)の間はscrollHeightが0になり、パネルの高さ揃え(equalizeBoxHeights)が
+    // 0pxのまま固定されてしまう。表示されて実際にレイアウトされた後にもう一度描画し直す。
+    requestAnimationFrame(()=> safeRender());
+  }
 }
 if($('mobileTabSettingsBtn')) $('mobileTabSettingsBtn').addEventListener('click', ()=> setMobileTab('settings'));
 if($('mobileTabChartBtn')) $('mobileTabChartBtn').addEventListener('click', ()=> setMobileTab('chart'));
