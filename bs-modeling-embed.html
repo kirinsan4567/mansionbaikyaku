@@ -1655,30 +1655,16 @@ const dashedRegionPlugin = {
     const catCount = chart.data.labels.length;
     ctx.save();
 
-    // 含み損・不足金 are drawn on their own (thicker line), independent of the outflow-merging logic below
-    chart.data.datasets.forEach((ds,dsIndex)=>{
-      if(!ds.isLoss && !ds.isShortfall) return;
-      const meta = chart.getDatasetMeta(dsIndex);
-      if(!meta.visible) return;
-      meta.data.forEach((bar,ci)=>{
-        const v = ds.data[ci];
-        if(!bar || v==null || v===0) return; // データが無い列の高さ0バーまで描くと、負の高さになって上に食い込むため除外
-        const top = Math.min(bar.y, bar.base), bottom = Math.max(bar.y, bar.base);
-        ctx.setLineDash([4,3]);
-        ctx.lineWidth = 2.2;
-        ctx.strokeStyle = '#C0392B';
-        ctx.strokeRect(bar.x-bar.width/2+1.5, top+1, bar.width-3, (bottom-top)-2);
-        ctx.setLineDash([]);
-      });
-    });
+    // 含み損・不足金は、隣接する諸費用等(isOutflow)と同じ列に積まれることが多いため、
+    // 別々に枠線を描くと境界線が二重になる。下のspans機構に統合し、1本の枠＋内部の仕切り線にする。
 
-    // combined per-column span for outflow/deductedOverlay segments (also track each
+    // combined per-column span for outflow/deductedOverlay/loss/shortfall segments (also track each
     // individual segment's own boundary so we can draw internal dividers between them)
     const spans = [null,null];
     const innerBoundaries = [[],[]];
     for(let ci=0; ci<catCount; ci++){
       chart.data.datasets.forEach((ds,dsIndex)=>{
-        if(!ds.isOutflow && !ds.isDeductedOverlay) return;
+        if(!ds.isOutflow && !ds.isDeductedOverlay && !ds.isLoss && !ds.isShortfall) return;
         const meta = chart.getDatasetMeta(dsIndex);
         if(!meta.visible) return;
         const bar = meta.data[ci];

@@ -50,7 +50,7 @@ body{
   -webkit-font-smoothing:antialiased;
 }
 header{
-  padding:20px 32px;
+  padding:5px 32px;
   border-bottom:1px solid var(--line);
   background:linear-gradient(180deg,#FBF9F4,var(--paper));
   position:sticky;
@@ -75,7 +75,7 @@ header h1{
   font-family:'Shippori Mincho B1',serif;
   font-weight:800;
   font-size:26px;
-  margin:6px 0 4px;
+  margin:4px 0 3px;
   letter-spacing:.02em;
 }
 header p{margin:0;color:var(--ink-soft);font-size:13.5px;}
@@ -597,7 +597,7 @@ header p{margin:0;color:var(--ink-soft);font-size:13.5px;}
           <polygon points="20,20 20,37 5,20" fill="#14315C"/>
           <polygon points="20,20 5,20 20,3" fill="#072544"/>
         </svg>
-        不動産売却益計算シミュレーター 拡張モデル
+        <a href="index.html" style="font-family:'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'BIZ UDPGothic', Meiryo, sans-serif; color:inherit; text-decoration:none;">不動産売却益計算シミュレーター</a> 拡張モデル
       </div>
       <h1>不動産バランスシート・モデリング</h1>
     </div>
@@ -1611,30 +1611,16 @@ const dashedRegionPlugin = {
     const catCount = chart.data.labels.length;
     ctx.save();
 
-    // 含み損・不足金 are drawn on their own (thicker line), independent of the outflow-merging logic below
-    chart.data.datasets.forEach((ds,dsIndex)=>{
-      if(!ds.isLoss && !ds.isShortfall) return;
-      const meta = chart.getDatasetMeta(dsIndex);
-      if(!meta.visible) return;
-      meta.data.forEach((bar,ci)=>{
-        const v = ds.data[ci];
-        if(!bar || v==null || v===0) return; // データが無い列の高さ0バーまで描くと、負の高さになって上に食い込むため除外
-        const top = Math.min(bar.y, bar.base), bottom = Math.max(bar.y, bar.base);
-        ctx.setLineDash([4,3]);
-        ctx.lineWidth = 2.2;
-        ctx.strokeStyle = '#C0392B';
-        ctx.strokeRect(bar.x-bar.width/2+1.5, top+1, bar.width-3, (bottom-top)-2);
-        ctx.setLineDash([]);
-      });
-    });
+    // 含み損・不足金は、隣接する諸費用等(isOutflow)と同じ列に積まれることが多いため、
+    // 別々に枠線を描くと境界線が二重になる。下のspans機構に統合し、1本の枠＋内部の仕切り線にする。
 
-    // combined per-column span for outflow/deductedOverlay segments (also track each
+    // combined per-column span for outflow/deductedOverlay/loss/shortfall segments (also track each
     // individual segment's own boundary so we can draw internal dividers between them)
     const spans = [null,null];
     const innerBoundaries = [[],[]];
     for(let ci=0; ci<catCount; ci++){
       chart.data.datasets.forEach((ds,dsIndex)=>{
-        if(!ds.isOutflow && !ds.isDeductedOverlay) return;
+        if(!ds.isOutflow && !ds.isDeductedOverlay && !ds.isLoss && !ds.isShortfall) return;
         const meta = chart.getDatasetMeta(dsIndex);
         if(!meta.visible) return;
         const bar = meta.data[ci];
