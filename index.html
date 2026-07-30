@@ -129,6 +129,14 @@
   @media (max-width:899px){
     .pc-only{ display:none !important; }
   }
+  .calc-basis-fixedbar{
+    position:fixed; top:calc(var(--header-h) + 8px); right:16px; z-index:60;
+    display:flex; align-items:center; gap:12px;
+    background:#fff; padding:8px 14px; border:1px solid var(--line); border-radius:8px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.25);
+  }
+  .calc-basis-fixedbar .calc-basis-title{ font-weight:700; color:#1E5FA8; font-size:14px; white-space:nowrap; }
+  .calc-basis-fixedbar button{ white-space:nowrap; }
 
   .stepbar{
     display:flex; gap:4px; margin:0 0 10px;
@@ -419,8 +427,11 @@
     <div class="results-scroll">
       <div id="resultsBodyPC"></div>
       <div id="calcBasisWrap" style="display:none;">
-        <button class="btn small" onclick="hideCalculationBasis()" style="position:fixed; top:calc(var(--header-h) + 8px); left:16px; z-index:60; box-shadow:0 2px 6px rgba(0,0,0,0.25);">← 試算結果に戻る</button>
-        <div style="height:40px;"></div>
+        <div class="calc-basis-fixedbar">
+          <span class="calc-basis-title">計算根拠詳細</span>
+          <button class="btn small" onclick="hideCalculationBasis()">← 試算結果に戻る</button>
+        </div>
+        <div style="height:48px;"></div>
         <iframe id="calcBasisFrame" src="" style="width:100%;height:80vh;border:1px solid var(--line);border-radius:8px;background:#fff;"></iframe>
       </div>
       <footer class="site-footer pc-only" id="resultsFooterPC">
@@ -4905,17 +4916,20 @@ function renderResults(){
 }
 
 function runSimulation(){
+  hideCalculationBasis(); // 計算根拠詳細を開いたままだと、更新後の試算結果が裏で描画されて見えなくなるため閉じる
   state.viewMode = 'results';
   saveState();
   renderResults();
 }
 
 function toggleMarketView(){
+  hideCalculationBasis(); // 同上：計算根拠詳細を開いたままだと類似物件価格分析の画面に切り替わって見えない
   state.viewMode = state.viewMode==='market' ? 'results' : 'market';
   if(state.viewMode!=='market') marketEditIndex = null;
   saveState();
   render();
 }
+
 
 function render(){
   updateHeaderSummary();
