@@ -722,7 +722,7 @@ header{
       <summary><span class="tag">H</span> 頭金充当・与信判定（2次取得）</summary>
       <div class="group-body">
         <div class="hint" style="background:var(--gold-soft);border:1px solid var(--gold);border-radius:6px;padding:8px 10px;margin-bottom:10px;">
-          <b>基本方針：</b>売却時の現預金には手を付けず、売却手取り＋有価証券だけで2次取得の頭金・諸費用を賄います。
+          <b>基本方針：</b>現預金を優先的に充当し、不足分を有価証券・売却手取りから充当します。
         </div>
         <div class="field"><label>新居の頭金として使う金額（万円）<span class="info-icon" id="downPayUseInfo" title="空欄の場合、売却手取り＋既存の有価証券（現預金は含まない）から、購入仲介手数料・新居購入時諸費用を差し引いた金額を自動的に頭金として使います">ⓘ</span></label>
           <input type="text" inputmode="decimal" class="num-input" id="downPayUse" value="">
@@ -1160,14 +1160,17 @@ function computeCore(){
   const shortfallAmount = Math.max(0, -liquidPoolAfterReacqRaw); // それでも資金が尽きる場合の不足額
   const liquidPoolFinal = Math.max(0, liquidPoolAfterReacqRaw);
 
-  // 頭金充当・諸費用等支払の現預金/有価証券への割当（現預金を温存する方針のため、
-  // デフォルトでは有価証券・売却益側から先に充当する。入力欄で変更可）
+  // 頭金充当・諸費用等支払の現預金/有価証券への割当（現預金を優先的に充当し、
+  // 不足分を有価証券・売却益から充当する方針。入力欄で変更可）
   const reacqCostTotal = buyFee3 + Math.abs(cost3);
-  const downUseCashAlloc = clampAlloc(allocState.reacqDownCash, 0, downUse);
+  const downUseCashAlloc = clampAlloc(allocState.reacqDownCash, Math.min(downUse, cashAtSaleFinal), downUse);
   const cashAfterDownUse = Math.max(0, cashAtSaleFinal - downUseCashAlloc);
-  const reacqCostCashAlloc = clampAlloc(allocState.reacqCostCash, 0, reacqCostTotal);
+  const reacqCostCashAlloc = clampAlloc(allocState.reacqCostCash, Math.min(reacqCostTotal, cashAfterDownUse), reacqCostTotal);
   const downUseSecAlloc = downUse - downUseCashAlloc;
   const reacqCostSecAlloc = reacqCostTotal - reacqCostCashAlloc;
+  // 現預金優先で割り当てた後、なお有価証券「だけ」では頭金・諸費用を賄いきれないケースを検出する。
+  const secBucketNeed = downUseSecAlloc + reacqCostSecAlloc;
+  const secBucketShortfall = Math.max(0, secBucketNeed - secAtSaleFinal);
   const cashFinal3raw = Math.max(0, cashAtSaleFinal - downUseCashAlloc - reacqCostCashAlloc);
   const secFinal3raw = Math.max(0, secAtSaleFinal - downUseSecAlloc - reacqCostSecAlloc);
   const finalSplitSum = cashFinal3raw + secFinal3raw;
@@ -1187,6 +1190,7 @@ function computeCore(){
     cashAtSaleFinal, secAtSaleFinal, saleShortfall, deductionFromCash,
     availableForDown, downFundingGap, shortfallAmount, liquidPoolFinal, liquidPoolFinalForEquity,
     downUseCashAlloc, downUseSecAlloc, reacqCostCashAlloc, reacqCostSecAlloc, reacqCostTotal, cashFinal3, secFinal3,
+    secBucketShortfall,
     base
   };
 }
@@ -2216,7 +2220,7 @@ function render(){
         <div class="alloc-row"><label>現預金充当</label><input type="text" inputmode="decimal" class="alloc-input num-input" data-key="reacqCostCash" data-total="${core.reacqCostTotal}" value="${Math.round(core.reacqCostCashAlloc)}"><label>有価証券等売却益充当</label><input type="text" inputmode="decimal" class="alloc-input num-input" data-key="reacqCostSec" data-pair="reacqCostCash" data-total="${core.reacqCostTotal}" value="${Math.round(core.reacqCostSecAlloc)}"></div>
         <div class="alloc-hint">現預金を優先的に充当し、不足分を有価証券等の売却益で補います（⑤に反映）。どちらの金額も編集できます</div>
       </div>`;
-    if(s.group==='reacq') extra = `<div class="callout gold" id="calloutDown_${idx}"></div><div class="callout" id="calloutFees_${idx}"></div><div class="callout" id="calloutShortfall_${idx}" style="display:none;"></div>`;
+    if(s.group==='reacq') extra = `<div class="callout gold" id="calloutDown_${idx}"></div><div class="callout" id="calloutFees_${idx}"></div><div class="callout danger" id="calloutSecShortfall_${idx}" style="display:none;"></div><div class="callout" id="calloutShortfall_${idx}" style="display:none;"></div>`;
     html += panelSkeleton(idx, s.key, s.title, extra);
     if(idx < steps.length-1) html += `<div class="arrow-col">→</div>`;
   });
@@ -2477,6 +2481,14 @@ function render(){
         ? `頭金・諸費用を払った後、${gapAbs}万円の余りが生じています → 「有価証券+現預金」に加算（★の${fmt(d.liquidPoolAtSale)}万円 → 2次取得後の${fmt(d.liquidPoolFinal)}万円）`
         : `頭金・諸費用に対して${gapAbs}万円不足しています → 既存の「有価証券+現預金」から補填（★の${fmt(d.liquidPoolAtSale)}万円 → 2次取得後の${fmt(d.liquidPoolFinal)}万円）。現預金・有価証券のどちらから充当するかは分けず、合算した資産プールとして扱っています。BS右下の赤い帯（不足金）も参照してください`;
       $(`calloutFees_${idx}`).innerHTML = gapMsg;
+
+      const secShortfallEl = $(`calloutSecShortfall_${idx}`);
+      if(d.secBucketShortfall > 0){
+        secShortfallEl.style.display = 'block';
+        secShortfallEl.innerHTML = `⚠ 有価証券だけでは頭金・諸費用の充当に${fmt(d.secBucketShortfall)}万円不足しています<br><span style="font-weight:400;">現預金＋有価証券の合計では不足していませんが、上の「有価証券等売却益充当」欄の金額が、実際に売却時点で保有している有価証券額を超えています。現預金充当の金額を増やすか、有価証券充当の金額を減らしてください。</span>`;
+      } else {
+        secShortfallEl.style.display = 'none';
+      }
 
       const shortfallEl = $(`calloutShortfall_${idx}`);
       if(d.shortfallAmount > 0){
