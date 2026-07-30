@@ -1202,7 +1202,7 @@ const barLabelsPlugin = {
         const name = (ds.labelByIndex && ds.labelByIndex[ci]) || ds.shortLabel || ds.label;
         const oneLine = `${name} ${fmt(val)}万円`;
         let textColor;
-        if(ds.isShortfall) textColor = '#C0392B';
+        if(ds.isShortfall) textColor = '#000000';
         else if(ds.isOutflow || ds.isDeductedOverlay || ds.isLoss) textColor = '#C0392B';
         else textColor = luminanceTextColor(ds.backgroundColor);
 
@@ -1616,8 +1616,9 @@ const dashedRegionPlugin = {
       if(!ds.isLoss && !ds.isShortfall) return;
       const meta = chart.getDatasetMeta(dsIndex);
       if(!meta.visible) return;
-      meta.data.forEach(bar=>{
-        if(!bar) return;
+      meta.data.forEach((bar,ci)=>{
+        const v = ds.data[ci];
+        if(!bar || v==null || v===0) return; // データが無い列の高さ0バーまで描くと、負の高さになって上に食い込むため除外
         const top = Math.min(bar.y, bar.base), bottom = Math.max(bar.y, bar.base);
         ctx.setLineDash([4,3]);
         ctx.lineWidth = 2.2;
@@ -1666,12 +1667,18 @@ const dashedRegionPlugin = {
       ctx.strokeStyle = '#C0392B';
       ctx.setLineDash([4,3]);
 
+      // spans[0]/spans[1]の上端は本来ゼロ地点ちょうどのはずだが、浮動小数点の誤差や
+      // アンチエイリアスにより、直上に積まれているプラスの資産バーへ数px食い込むことがあった。
+      // ゼロのピクセル位置を基準に、必ずそこより下(内側)に来るようclampする。
+      const zeroPixel = y.getPixelForValue(0);
+      const minTop = zeroPixel + 1.5;
+
       if(spans[0] && spans[1] && catCount===2){
         const bar0 = spans[0].bar, bar1 = spans[1].bar;
         const l = bar0.x-bar0.width/2+1.5, r = bar1.x+bar1.width/2-1.5;
         const seamX = bar0.x+bar0.width/2; // shared edge — the two bars sit flush against each other
-        const top0 = spans[0].top+1, bottom0 = spans[0].bottom-1;
-        const top1 = spans[1].top+1, bottom1 = spans[1].bottom-1;
+        const top0 = Math.max(spans[0].top+1, minTop), bottom0 = spans[0].bottom-1;
+        const top1 = Math.max(spans[1].top+1, minTop), bottom1 = spans[1].bottom-1;
 
         ctx.beginPath();
         ctx.moveTo(l, top0); ctx.lineTo(seamX, top0); // asset's own top (its own width only)
@@ -1692,7 +1699,8 @@ const dashedRegionPlugin = {
         [0,1].forEach(ci=>{
           if(!spans[ci]) return;
           const bar = spans[ci].bar;
-          ctx.strokeRect(bar.x-bar.width/2+1.5, spans[ci].top+1, bar.width-3, (spans[ci].bottom-spans[ci].top)-2);
+          const top = Math.max(spans[ci].top+1, minTop);
+          ctx.strokeRect(bar.x-bar.width/2+1.5, top, bar.width-3, (spans[ci].bottom-1)-top);
         });
       }
       ctx.setLineDash([]);
@@ -2063,7 +2071,7 @@ function render(){
         blankMirror = {fromValue:0, toValue:-cost1Abs, targetCol:0};
       }
       if(core.shortfallAmount0 > 0){
-        ds.push({label:'不足金', data:[null, -core.shortfallAmount0], backgroundColor:'#C0392B', group:'shortfall', isShortfall:true});
+        ds.push({label:'不足金', data:[null, -core.shortfallAmount0], backgroundColor:'#F0B4AD', group:'shortfall', isShortfall:true});
       }
       total = core.liquidPre;
       summaryHtml = cost1Abs > 0
@@ -2082,7 +2090,7 @@ function render(){
         {label:'借入金', data:[null, core.loan1], backgroundColor:COLORS.loan, group:'debt'},
       ];
       if(core.shortfallAmount0 > 0){
-        ds.push({label:'不足金', data:[null, -core.shortfallAmount0], backgroundColor:'#C0392B', group:'shortfall', isShortfall:true});
+        ds.push({label:'不足金', data:[null, -core.shortfallAmount0], backgroundColor:'#F0B4AD', group:'shortfall', isShortfall:true});
       }
       total = core.price1 + core.base.sec0 + core.base.cash0 + core.otherAssets;
       summaryHtml = `借入金 ${fmt(core.loan1)}万円／自己資金(頭金) ${fmt(core.down1)}万円`;
@@ -2126,7 +2134,7 @@ function render(){
         {label:'金融資産', data:[null, netWorthTotalSale], backgroundColor:COLORS.finAsset, group:'equity'},
       ];
       if(core.saleShortfall > 0){
-        ds.push({label:'不足金', data:[null, -core.saleShortfall], backgroundColor:'#C0392B', group:'shortfall', isShortfall:true});
+        ds.push({label:'不足金', data:[null, -core.saleShortfall], backgroundColor:'#F0B4AD', group:'shortfall', isShortfall:true});
       }
       // preview of what flows out at the ★→⑤ transition (2次取得の仲介手数料・諸費用), shown here rather than on ⑤ itself
       ds.push({label:'購入仲介手数料', data:[null, -reacqFeeFromPool], backgroundColor:'#FFFFFF', group:'outflow', isOutflow:true});
@@ -2149,7 +2157,7 @@ function render(){
         {label:'借入金', data:[null, core.loan3], backgroundColor:COLORS.loan, group:'debt'},
       ];
       if(core.shortfallAmount > 0){
-        ds.push({label:'不足金', data:[null, -core.shortfallAmount], backgroundColor:'#C0392B', group:'shortfall', isShortfall:true});
+        ds.push({label:'不足金', data:[null, -core.shortfallAmount], backgroundColor:'#F0B4AD', group:'shortfall', isShortfall:true});
       }
       total = core.price3 + core.liquidPoolFinal + core.otherAssets;
       summaryHtml = `★の手取り ${fmt(core.liquidPoolAtSale)}万円／頭金充当 ${fmt(core.downUse)}万円`;
