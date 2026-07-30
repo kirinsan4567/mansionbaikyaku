@@ -74,7 +74,7 @@ header .eyebrow{
 header h1{
   font-family:'Shippori Mincho B1',serif;
   font-weight:800;
-  font-size:26px;
+  font-size:14.5px;
   margin:4px 0 3px;
   letter-spacing:.02em;
 }
@@ -84,7 +84,7 @@ header p{margin:0;color:var(--ink-soft);font-size:13.5px;}
   display:grid;
   grid-template-columns:340px 1fr;
   gap:0;
-  height:calc(100vh - 101px);
+  height:calc(100vh - var(--header-h, 56px));
 }
 .sidebar{
   border-right:1px solid var(--line);
@@ -579,13 +579,40 @@ header p{margin:0;color:var(--ink-soft);font-size:13.5px;}
 }
 .footnotes b{color:var(--ink);}
 
+.mobile-tab-bar{ display:none; }
+@media (max-width:1100px){
+  .mobile-tab-bar{
+    display:flex;
+    gap:6px;
+    margin-top:10px;
+  }
+  .mobile-tab-btn{
+    flex:1 1 auto;
+    padding:7px 6px;
+    border-radius:7px;
+    border:1px solid var(--slate);
+    background:var(--slate-soft);
+    color:var(--slate);
+    font-weight:800;
+    font-size:12.5px;
+    cursor:pointer;
+  }
+  .mobile-tab-btn.active{
+    background:var(--slate);
+    color:#fff;
+  }
+  /* スマホでは設定/BSチャートのどちらか片方だけを表示し、縦に3分割されて
+     BS図が見えなくなるのを防ぐ。タブボタンでbodyのクラスを切り替える。 */
+  body.mobile-tab-chart .sidebar{ display:none; }
+  body.mobile-tab-settings .main{ display:none; }
+}
 @media (max-width:1100px){
   .layout{grid-template-columns:1fr;}
   .sidebar{border-right:none;border-bottom:1px solid var(--line);}
 }
 </style>
 </head>
-<body>
+<body class="mobile-tab-settings">
 
 <header>
   <div class="header-row">
@@ -610,6 +637,10 @@ header p{margin:0;color:var(--ink-soft);font-size:13.5px;}
       <input type="file" id="importJsonFile" accept="application/json" style="display:none;">
       <input type="file" id="reloadGainFile" accept="application/json" style="display:none;">
     </div>
+  </div>
+  <div class="mobile-tab-bar">
+    <button type="button" id="mobileTabSettingsBtn" class="mobile-tab-btn active">設定</button>
+    <button type="button" id="mobileTabChartBtn" class="mobile-tab-btn">BSチャート</button>
   </div>
 </header>
 
@@ -2371,6 +2402,28 @@ $('exampleBtn').addEventListener('click', (e)=>{
   renderValSnapshotInputs();
   safeRender();
 });
+
+// ヘッダーの実際の高さ(スマホでは折り返しで可変)をCSS変数に反映し、
+// レイアウトの残り高さ計算(.layout)がヘッダーと重ならないようにする
+function syncHeaderHeight(){
+  const header = document.querySelector('header');
+  if(header) document.documentElement.style.setProperty('--header-h', header.offsetHeight + 'px');
+}
+window.addEventListener('resize', syncHeaderHeight);
+window.addEventListener('load', syncHeaderHeight);
+syncHeaderHeight();
+
+// スマホ表示専用：「設定」「BSチャート」タブの切り替え
+function setMobileTab(tab){
+  document.body.classList.toggle('mobile-tab-settings', tab==='settings');
+  document.body.classList.toggle('mobile-tab-chart', tab==='chart');
+  const settingsBtn = $('mobileTabSettingsBtn'), chartBtn = $('mobileTabChartBtn');
+  if(settingsBtn) settingsBtn.classList.toggle('active', tab==='settings');
+  if(chartBtn) chartBtn.classList.toggle('active', tab==='chart');
+  syncHeaderHeight();
+}
+if($('mobileTabSettingsBtn')) $('mobileTabSettingsBtn').addEventListener('click', ()=> setMobileTab('settings'));
+if($('mobileTabChartBtn')) $('mobileTabChartBtn').addEventListener('click', ()=> setMobileTab('chart'));
 
 $('clearBtn').addEventListener('click', ()=>{
   if(!confirm('全ての入力値を消去します。よろしいですか？')) return;
