@@ -2101,6 +2101,7 @@ function syncHeaderHeight(){
     if(header && header.offsetHeight){
       const h = header.offsetHeight;
       document.body.style.paddingTop = h + 'px';
+      document.documentElement.style.setProperty('--header-h', h + 'px');
       const stepbar = document.getElementById('stepbar');
       if(stepbar) stepbar.style.top = h + 'px';
     }
@@ -4064,6 +4065,8 @@ function showCalculationBasis(){
   if(rc) rc.style.display = 'none';
   frame.src = 'calculation-basis.html';
   wrap.style.display = '';
+  const scrollContainer = document.querySelector('#resultsColPC .results-scroll') || document.getElementById('resultsColPC');
+  if(scrollContainer) scrollContainer.scrollTop = 0;
 }
 function hideCalculationBasis(){
   const rc = document.getElementById('resultsBodyPC');
