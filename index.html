@@ -144,7 +144,7 @@
     background:var(--paper); padding:8px 0;
   }
   .stepbar button{
-    flex:1; padding:8px 2px; font-size:11px; font-family:inherit;
+    flex:1; padding:8px 2px; font-size:11px; font-family:inherit; font-weight:700;
     border:1px solid var(--green); background:var(--green); color:#fff;
     border-radius:6px; cursor:pointer; opacity:0.55;
   }
@@ -2680,10 +2680,10 @@ function buildSaleSettingsPanel(){
   });
   body.appendChild(fieldBare(currentPriceInput));
 
-  const marketHead = el('h3',{class:'sub'},'類似物件価格分析');
+  const marketHead = el('h3',{class:'sub'},'価格分析ツール');
   marketHead.appendChild(makeInfoIcon('周辺の類似物件の価格を登録・分析できます(右側に表示されます)。'));
   body.appendChild(marketHead);
-  const marketLinkBtn = el('button',{class:'btn small', style:'margin-bottom:4px;background:#4C4B45;border-color:#3A3A37;color:#fff;'}, '類似物件価格分析を開く ↗');
+  const marketLinkBtn = el('button',{class:'btn small', style:'margin-bottom:4px;background:#4C4B45;border-color:#3A3A37;color:#fff;'}, '価格分析ツールを開く ↗');
   marketLinkBtn.addEventListener('click', ()=>{ toggleMarketView(); window.scrollTo(0,0); });
   body.appendChild(marketLinkBtn);
 
@@ -3155,7 +3155,7 @@ function buildMarketResearchPage(){
   const container = document.createDocumentFragment();
 
   const titleRow = el('div',{style:'display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 0 8px;flex-wrap:wrap;'});
-  titleRow.appendChild(el('div',{style:'font-size:22px;font-weight:800;color:#1A1A18;'}, '類似物件価格分析'));
+  titleRow.appendChild(el('div',{style:'font-size:22px;font-weight:800;color:#1A1A18;'}, '価格分析ツール'));
   const backBtn = el('button',{class:'btn small', style:'background:#DCEBFA;border-color:#A9CBEA;color:#1F3864;font-weight:700;'}, '← シミュレーションに戻る');
   backBtn.addEventListener('click', ()=>{ toggleMarketView(); window.scrollTo(0,0); });
   titleRow.appendChild(backBtn);
@@ -4941,7 +4941,7 @@ function drawStackChart(canvas, chartWrap, s){
 /* =========================================================
    8. 画面描画(PC/スマホ分岐)
 ========================================================= */
-const STEP_LABELS = ["購入設定","売却設定","シナリオ","その他"];
+const STEP_LABELS = ["購入設定","売却設定","シナリオ","その他","シミュレーション"];
 const NAV_CATEGORIES = [
   { key:'basic', label:'購入設定', target:'panel-basic' },
   { key:'sale', label:'売却設定', target:'panel-sale' },
@@ -4967,7 +4967,7 @@ function renderStepbar(){
     b.addEventListener('click', ()=>{ state.viewMode='results'; state.step=i; saveState(); render(); window.scrollTo(0,0); });
     bar.appendChild(b);
   }
-  const researchBtn = el('button',{class:'stepbar-research-btn'}, '調査');
+  const researchBtn = el('button',{class:'stepbar-research-btn'}, '分析ツール');
   if(state.viewMode==='market') researchBtn.classList.add('active');
   researchBtn.addEventListener('click', ()=>{ toggleMarketView(); window.scrollTo(0,0); });
   bar.appendChild(researchBtn);
