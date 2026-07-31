@@ -533,15 +533,21 @@ function buildBsModelPrefill(){
   // 住宅ローン控除：BSモデルのE時価評価は複数年に及ぶため、単一の合計値ではなく
   // 経過年数(購入年からの年数)ごとの累計額をスケジュールとして渡す。
   // BSモデル側は「その年に売った場合」相当の累計額をそのまま現預金に加算する。
+  // 借入残高：③(BSモデル)は本来、簡易な元利均等の再計算ではなく、①の金利変動シナリオ等を
+  // 反映した②の正確な残高をそのまま使うべきなので、経過年ごとの残高スケジュールとして渡す。
   try{
     const rows = computeYearlyTable(state);
     const purchaseYearForSchedule = state.contractDate ? new Date(state.contractDate).getFullYear() : BASE_YEAR;
-    const schedule = {};
+    const deductionSchedule = {};
+    const loanBalanceSchedule = {};
     rows.forEach(r=>{
       const elapsed = r.year - purchaseYearForSchedule;
-      if(elapsed>=0) schedule[elapsed] = r.mortgageDeductionCumulative;
+      if(elapsed<0) return;
+      deductionSchedule[elapsed] = r.mortgageDeductionCumulative;
+      loanBalanceSchedule[elapsed] = r.loanBalanceThisYear;
     });
-    if(Object.keys(schedule).length) p.mortgageDeductionByYear = schedule;
+    if(Object.keys(deductionSchedule).length) p.mortgageDeductionByYear = deductionSchedule;
+    if(Object.keys(loanBalanceSchedule).length) p.loanBalanceByYear = loanBalanceSchedule;
   }catch(e){}
 
   return p;
@@ -697,7 +703,7 @@ const defaultState = {
   step:1,
   propertyName:"", buildingName:"", floorNumber:null, roomNumber:"", direction:"南", isCornerUnit:false,
   contractDate:"", totalPrice:null, currentPrice:null, historicalPrices:{}, historicalYearsShown:undefined,
-  yearlyPriceOverrides:{}, yearlyRateOverrides:{},
+  yearlyPriceOverrides:{best:{}, moderate:{}, worst:{}}, yearlyRateOverrides:{best:{}, moderate:{}, worst:{}},
   floorArea:null, structure:"RC造",
   buildType:"新築", completionDate:"", initialUse:"自宅用", planToMove:"予定なし",
   expenseRate:3, expenseAmount:null,
@@ -729,12 +735,38 @@ const defaultState = {
 let state = JSON.parse(JSON.stringify(defaultState));
 let collapsedPanels = {};
 
+// 年別価格・伸び率の個別設定は、シナリオ(best/moderate/worst)ごとに別々に保持する。
+// {シナリオ: {年: 値}} という構造。同じ年でもシナリオが違えば別の値を持てる。
+function getYearlyOverrides(s, kind){
+  const key = kind==='price' ? 'yearlyPriceOverrides' : 'yearlyRateOverrides';
+  if(!s[key] || typeof s[key]!=='object') s[key] = {};
+  const scenario = s.scenario || 'moderate';
+  if(!s[key][scenario] || typeof s[key][scenario]!=='object') s[key][scenario] = {};
+  return s[key][scenario];
+}
+// 旧形式(シナリオの区別が無く、年をキーに直接値を持つ{年:値})のデータを読み込んだ場合、
+// 当時選択されていたであろうmoderateシナリオの個別設定として移行する(データを失わないため)。
+function migrateYearlyOverrides(s){
+  ['yearlyPriceOverrides','yearlyRateOverrides'].forEach(key=>{
+    const obj = s[key];
+    if(!obj || typeof obj!=='object') { s[key] = {best:{}, moderate:{}, worst:{}}; return; }
+    const hasScenarioKeys = ('best' in obj) || ('moderate' in obj) || ('worst' in obj);
+    if(hasScenarioKeys){
+      ['best','moderate','worst'].forEach(sc=>{ if(!obj[sc] || typeof obj[sc]!=='object') obj[sc] = {}; });
+      return;
+    }
+    // 旧形式：キーが全て年(数値)の場合はmoderateへ移行
+    const oldFlat = obj;
+    s[key] = {best:{}, moderate: oldFlat, worst:{}};
+  });
+}
 function loadState(){
   try{
     const saved = localStorage.getItem('mansionbaikyaku_state');
     if(saved){ state = Object.assign({}, defaultState, JSON.parse(saved)); }
     if(!state.saleDate) state.saleDate = defaultState.saleDate;
     if(!state.yearlyRateOverrides) state.yearlyRateOverrides = {};
+    migrateYearlyOverrides(state);
     migrateMajorRepairs(state);
   }catch(e){}
 }
@@ -846,6 +878,7 @@ function importData(ev){
       state.loanRate = currentLoanFields.loanRate;
       state.loanTerm = currentLoanFields.loanTerm;
       mergeLoanFieldsWithConflictCheck(incomingLoanFields, '保存データ読込');
+      migrateYearlyOverrides(state);
       migrateMajorRepairs(state);
       saveState(); render();
     }catch(err){ alert("読み込みに失敗しました。ファイル形式をご確認ください。"); }
@@ -897,6 +930,7 @@ function extractLoanPlans(data){
       startYear: parseLooseNumber(sch.startYear),
       startMonth: parseLooseNumber(sch.startMonth),
       repayType: sch.repayType || 'equal_payment',
+      rateType: sch.rateType || null, // 'variable' | 'fixed'。金利タイプ(変動/固定)欄への反映用
       startYM: (sch.startYear && sch.startMonth) ? `${sch.startYear}/${sch.startMonth}` : '',
       rateEvents: cleanEvents,
       use5yr: !!sch.rule5yr,
@@ -1087,6 +1121,8 @@ function showLoanImportModal(candidate){
       state.loanPrepayAdjustedSchedule = candidate.prepayAdjustedSchedule || null;
       if(candidate.isEstimated){
         state.loanRepayType = candidate.repayType || 'equal_payment';
+        if(candidate.rateType==='variable') state.loanType = '変動';
+        else if(candidate.rateType==='fixed') state.loanType = '固定';
         state.loanUse5yr = !!candidate.use5yr;
         state.loanUse125 = !!candidate.use125;
         state.loanApplyDelay = candidate.applyDelay || 0;
@@ -1213,6 +1249,7 @@ function applyLoanScheduleSelection(schedule){
       rateEvents: schedule.rateEvents || [],
       loanStartYM: (schedule.startYear && schedule.startMonth) ? `${schedule.startYear}-${String(schedule.startMonth).padStart(2,'0')}` : null,
       repayType: schedule.repayType,
+      rateType: schedule.rateType,
       use5yr: schedule.use5yr, use125: schedule.use125, applyDelay: schedule.applyDelay,
       reviewMonths: schedule.reviewMonths,
       bonusOn: schedule.bonusOn, bonusMode: schedule.bonusMode, bonusValue: schedule.bonusValue, bonusMonths: schedule.bonusMonths,
@@ -1458,18 +1495,20 @@ function buildFuturePriceSeries(s){
   const purchasePrice = Number(s.totalPrice)||0;
   const currentBase = s.currentPrice ? Number(s.currentPrice) : estimateCurrentPriceFromScenario(s);
 
+  const priceOverrides = getYearlyOverrides(s, 'price');
+  const rateOverrides = getYearlyOverrides(s, 'rate');
   const series = {};
   for(let i=0;i<SIM_YEARS;i++){
     const y = BASE_YEAR + i;
     if(i===0){
-      const ov = s.yearlyPriceOverrides && s.yearlyPriceOverrides[y];
+      const ov = priceOverrides[y];
       series[y] = (ov!==undefined && ov!==null && ov!=='') ? Number(ov) : currentBase;
       continue;
     }
     const prev = series[y-1];
-    const priceOv = s.yearlyPriceOverrides && s.yearlyPriceOverrides[y];
+    const priceOv = priceOverrides[y];
     if(priceOv!==undefined && priceOv!==null && priceOv!==''){ series[y] = Number(priceOv); continue; }
-    const rateOv = s.yearlyRateOverrides && s.yearlyRateOverrides[y];
+    const rateOv = rateOverrides[y];
     if(rateOv!==undefined && rateOv!==null && rateOv!==''){ series[y] = prev * (1+Number(rateOv)/100); continue; }
     const idx = Math.min(i, yoy.length-1);
     series[y] = prev * (1+yoy[idx]);
@@ -2159,7 +2198,13 @@ function buildBasicPanel(){
   body.appendChild(field('借入額(万円・任意)', loanAmountInput2, 'ローンを組む場合のみ入力してください。「住宅ローン返済シミュレーターからデータ取込」で自動入力できます。'));
   loanAmountInput2.addEventListener('blur', ()=> renderSettings());
   const loanTermInput = bindInput(el('input',{type:'number', class:'field-loan-imported-input'}), 'loanTerm', true);
-  body.appendChild(field('返済期間(年・任意)', loanTermInput, '「住宅ローン返済シミュレーターからデータ取込」で自動入力できます。金利は下の「住宅ローン(売却時点)」欄に入ります。'));
+  body.appendChild(field('返済期間(年・任意)', loanTermInput, '「住宅ローン返済シミュレーターからデータ取込」で自動入力できます。'));
+  const loanTypeRow = el('div',{class:'row2'});
+  loanTypeRow.appendChild(field('金利タイプ', bindSelect(el('select'),'loanType',['変動','固定']),
+    '記録用の項目です(計算には使用しません)。「住宅ローン返済シミュレーターからデータ取込」で自動反映されます。'));
+  loanTypeRow.appendChild(field('適用金利(%・任意)', bindInput(el('input',{type:'number', step:'0.01', class:'field-loan-imported-input'}),'loanRate',true),
+    '契約当初の金利を入力します(住宅ローン返済シミュレーターからデータ取込した場合は自動入力されます)。金利変動シナリオが設定されている場合、実際の「売却時点の残債」「保有コストの金利負担」は、この金利を起点にシナリオ通り変動した後の金利で計算されます(この欄の表示自体は契約当初の金利のまま変わりません)。金利変動シナリオが無い場合は、この金利が保有期間中ずっと一定のものとして計算されます。'));
+  body.appendChild(loanTypeRow);
   const downPayment = Math.max(Number(state.totalPrice||0) - Number(state.loanAmountAtPurchase||0), 0);
   body.appendChild(field('頭金(参考・自動計算)', el('div',{style:'padding:8px 9px;background:#EEEDE7;border-radius:6px;font-size:13px;color:var(--ink-soft);'}, man(downPayment)+'  ＝ 購入価格 － 借入額')));
 
@@ -2515,9 +2560,9 @@ function buildPricePanel(){
   });
   body.appendChild(field('売却想定', seg, '選んだパターンに基づく各年の予測価格が下の表のプレースホルダーに反映されます。ベスト/ワーストは竣工日からの築年数に応じて年ごとの変動率が変わります(モデレートは一律)。'));
 
-  const resetBtn = el('button',{class:'btn small btn-gray-reset', style:'margin:6px 0 4px;'},'手入力をすべてクリア');
+  const resetBtn = el('button',{class:'btn small btn-gray-reset', style:'margin:6px 0 4px;'},'この価格シナリオの手入力をすべてクリア');
   resetBtn.addEventListener('click', ()=>{
-    state.yearlyPriceOverrides = {}; state.yearlyRateOverrides = {};
+    state.yearlyPriceOverrides[state.scenario] = {}; state.yearlyRateOverrides[state.scenario] = {};
     saveState(); renderSettings(); if(isPC()) renderResults();
   });
   body.appendChild(resetBtn);
@@ -2542,8 +2587,10 @@ function buildPricePanel(){
 
   const editor = el('div',{class:'price-editor'});
   const series = buildFuturePriceSeries(state);
+  const priceOverrides = getYearlyOverrides(state, 'price');
+  const rateOverrides = getYearlyOverrides(state, 'rate');
   for(let y=BASE_YEAR+1; y<BASE_YEAR+SIM_YEARS; y++){
-    const isOverridden = !!(state.yearlyPriceOverrides[y] || state.yearlyRateOverrides[y]);
+    const isOverridden = !!(priceOverrides[y] || rateOverrides[y]);
     const row = el('div',{class:'pr'+(isOverridden?' overridden':'')});
     row.appendChild(el('span',{class:'py'},`${y}年`));
 
@@ -2555,17 +2602,17 @@ function buildPricePanel(){
     priceInput.setAttribute('placeholder', placeholderPrice);
 
     function getCurrentPriceVal(){
-      return state.yearlyPriceOverrides[y]!==undefined ? Number(state.yearlyPriceOverrides[y]) : series[y];
+      return priceOverrides[y]!==undefined ? Number(priceOverrides[y]) : series[y];
     }
     function setPriceVal(v){
-      state.yearlyPriceOverrides[y] = v; delete state.yearlyRateOverrides[y];
+      priceOverrides[y] = v; delete rateOverrides[y];
       saveState(); renderSettings(); if(isPC()) renderResults();
     }
 
-    priceInput.value = state.yearlyPriceOverrides[y] ? formatComma(state.yearlyPriceOverrides[y]) : '';
+    priceInput.value = priceOverrides[y] ? formatComma(priceOverrides[y]) : '';
     priceInput.addEventListener('change', ()=>{
       const raw = priceInput.value.replace(/[^0-9.\-]/g,'');
-      if(raw===''){ delete state.yearlyPriceOverrides[y]; saveState(); renderSettings(); if(isPC()) renderResults(); }
+      if(raw===''){ delete priceOverrides[y]; saveState(); renderSettings(); if(isPC()) renderResults(); }
       else{ setPriceVal(Number(raw)); }
     });
     priceMinus.addEventListener('click', ()=> setPriceVal(Math.round((getCurrentPriceVal()-100)/100)*100));
@@ -2580,19 +2627,19 @@ function buildPricePanel(){
       const rateAt = stepBtn('＋');
       const impliedRate = (series[y]/series[y-1]-1)*100;
       rateInput.setAttribute('placeholder', impliedRate.toFixed(1));
-      rateInput.value = state.yearlyRateOverrides[y]!==undefined ? Number(state.yearlyRateOverrides[y]).toFixed(1) : '';
+      rateInput.value = rateOverrides[y]!==undefined ? Number(rateOverrides[y]).toFixed(1) : '';
 
       function getCurrentRateVal(){
-        return state.yearlyRateOverrides[y]!==undefined ? Number(state.yearlyRateOverrides[y]) : impliedRate;
+        return rateOverrides[y]!==undefined ? Number(rateOverrides[y]) : impliedRate;
       }
       function setRateVal(v){
-        state.yearlyRateOverrides[y] = Math.round(v*10)/10;
-        delete state.yearlyPriceOverrides[y];
+        rateOverrides[y] = Math.round(v*10)/10;
+        delete priceOverrides[y];
         saveState(); renderSettings(); if(isPC()) renderResults();
       }
       rateInput.addEventListener('change', ()=>{
         const raw = rateInput.value.replace(/[^0-9.\-]/g,'');
-        if(raw===''){ delete state.yearlyRateOverrides[y]; saveState(); renderSettings(); if(isPC()) renderResults(); }
+        if(raw===''){ delete rateOverrides[y]; saveState(); renderSettings(); if(isPC()) renderResults(); }
         else{ setRateVal(Number(raw)); }
       });
       rateMinus.addEventListener('click', ()=> setRateVal(getCurrentRateVal()-0.5));
@@ -2649,14 +2696,15 @@ function buildSaleSettingsPanel(){
   const saleTodayInput = el('input',{type:'text', inputmode:'numeric'});
   const saleTodayPlaceholder = ()=> Math.round(priceForYear(state, getSaleYear(state))).toLocaleString('ja-JP');
   saleTodayInput.setAttribute('placeholder', saleTodayPlaceholder()+'(空欄なら自動計算)');
-  const existingOverride = state.yearlyPriceOverrides && state.yearlyPriceOverrides[saleYear0];
+  const existingOverride = getYearlyOverrides(state,'price')[saleYear0];
   saleTodayInput.value = (existingOverride!==undefined && existingOverride!==null && existingOverride!=='') ? formatComma(existingOverride) : '';
   saleTodayInput.addEventListener('change', ()=>{
     const raw = saleTodayInput.value.replace(/[^0-9.\-]/g,'');
     const y = getSaleYear(state);
-    if(!state.yearlyPriceOverrides) state.yearlyPriceOverrides = {};
-    if(raw===''){ delete state.yearlyPriceOverrides[y]; }
-    else{ state.yearlyPriceOverrides[y] = Number(raw); delete state.yearlyRateOverrides[y]; }
+    const priceOv = getYearlyOverrides(state,'price');
+    const rateOv = getYearlyOverrides(state,'rate');
+    if(raw===''){ delete priceOv[y]; }
+    else{ priceOv[y] = Number(raw); delete rateOv[y]; }
     saveState(); renderSettings(); if(isPC()) renderResults();
   });
   body.appendChild(fieldBare(saleTodayInput));
@@ -2900,30 +2948,28 @@ function buildMaintenancePanel(){
     body.appendChild(field('売却時点の残債(万円・自動計算)', balDisplay, balHint));
   } else {
     body.appendChild(field('売却時点の残債(万円)', bindMoneyInput('loanBalance'),
-      '※借入額・適用金利・返済期間をすべて入力すると、この欄は「売却設定」の売却予定年に応じた自動計算に切り替わります。「住宅ローン返済シミュレーターからデータ取込」で一括入力できます。'));
+      '※「購入設定」の借入額・適用金利・返済期間をすべて入力すると、この欄は「売却設定」の売却予定年に応じた自動計算に切り替わります。「住宅ローン返済シミュレーターからデータ取込」で一括入力できます。'));
   }
-  const row3 = el('div',{class:'row2'});
-  row3.appendChild(field('金利タイプ', bindSelect(el('select'),'loanType',['変動','固定'])));
-  row3.appendChild(field('適用金利(%・任意)', bindInput(el('input',{type:'number', step:'0.01', class:'field-loan-imported-input'}),'loanRate',true),
-    'この欄には「契約当初の金利」を入力します(住宅ローン返済シミュレーターからデータ取込した場合は自動入力されます)。金利変動シナリオが設定されている場合、実際の「売却時点の残債」「保有コストの金利負担」は、この金利からシナリオ通りに変動した後の金利で正しく計算されます(この欄の表示自体は契約当初の金利のまま変わりません)。金利変動シナリオが無い場合は、この金利が保有期間中ずっと一定のものとして計算されます。'));
-  body.appendChild(row3);
 
   const interestToggleWrap = el('label',{style:'display:flex;align-items:center;gap:8px;font-size:13px;margin-top:8px;cursor:pointer;'});
   const interestCb = el('input',{type:'checkbox'});
   interestCb.checked = !!state.includeLoanInterestInHoldingCost;
   interestToggleWrap.appendChild(interestCb);
   interestToggleWrap.appendChild(document.createTextNode('金利負担を保有コストに含める(概算)'));
+  body.appendChild(interestToggleWrap);
+  // 金利負担(保有コスト)の計算方法は、以前はⓘのツールチップの中だけに書かれていて見落としやすかったため、
+  // 常時見える注記として表示する(①住宅ローン返済シミュレーターのエンジンを使っているか、簡易計算かが分かるように)。
   const engineAvailable = (typeof KirinLoanEngine !== 'undefined' && KirinLoanEngine && typeof KirinLoanEngine.runLoanSimulation === 'function');
   let rateEventNote;
   if(engineAvailable && hasFullLoanSchedule(state)){
-    rateEventNote = '住宅ローン返済シミュレーターと共通の計算エンジンで計算しています。金利変動シナリオ・ボーナス払い・5年/125%ルールまで反映されます（繰り上げ返済は反映されません）。';
+    rateEventNote = '✓ 住宅ローン返済シミュレーターと共通の計算エンジンで計算しています。金利変動シナリオ・ボーナス払い・5年/125%ルールまで反映されます（繰り上げ返済は反映されません）。';
   } else if(state.loanRateEvents && state.loanRateEvents.length){
-    rateEventNote = `共通計算エンジンが読み込めなかったため、簡易計算（金利変動シナリオ${state.loanRateEvents.length}件は反映、ボーナス払い・5年/125%ルールは反映されません）にフォールバックしています。`;
+    rateEventNote = `△ 共通計算エンジンが読み込めなかったため、簡易計算（金利変動シナリオ${state.loanRateEvents.length}件は反映、ボーナス払い・5年/125%ルールは反映されません）にフォールバックしています。`;
   } else {
-    rateEventNote = '借入額・適用金利・返済期間から、元利均等返済・金利一定と仮定した簡易計算で各年の利息額を概算します。「住宅ローン返済シミュレーターからデータ取込」で、金利変動シナリオ・ボーナス払い・5年/125%ルールまで反映した計算に切り替わります。';
+    rateEventNote = '△ 「購入設定」の借入額・適用金利・返済期間から、元利均等返済・金利一定と仮定した簡易計算で各年の利息額を概算しています。「住宅ローン返済シミュレーターからデータ取込」で、金利変動シナリオ・ボーナス払い・5年/125%ルールまで反映した計算に切り替わります。';
   }
-  interestToggleWrap.appendChild(makeInfoIcon(rateEventNote+' 借入額・適用金利・返済期間のいずれかが未入力の場合、金利負担は0として扱われます。'));
-  body.appendChild(interestToggleWrap);
+  body.appendChild(el('div',{style:'font-size:11.5px;color:var(--ink-soft);line-height:1.6;margin-top:4px;'},
+    rateEventNote+' 借入額・適用金利・返済期間のいずれかが未入力の場合、金利負担は0として扱われます。'));
   interestCb.addEventListener('change', ()=>{
     state.includeLoanInterestInHoldingCost = interestCb.checked;
     saveState(); renderSettings(); if(isPC()) renderResults();

@@ -693,16 +693,16 @@ header p{margin:0;color:var(--ink-soft);font-size:13.5px;}
         <div class="field"><label>購入価格（万円）</label><input type="text" inputmode="decimal" class="num-input auto-filled" id="price1" value=""></div>
         <div class="field"><label>頭金（万円）</label><input type="text" inputmode="decimal" class="num-input auto-filled" id="downAmount1" value=""></div>
         <div class="field"><label>建物価格割合（%）※減価償却用</label><input type="text" inputmode="decimal" class="num-input auto-filled" id="buildingRatio" value=""></div>
-        <div class="field"><label>購入時諸費用（万円）</label><input type="text" inputmode="decimal" class="num-input auto-filled" id="cost1" value=""></div>
+        <div class="field"><label>購入時諸費用（万円）<span class="info-icon" title="登記費用・ローン事務費・修繕積立一括金・引越・家具家電等の合計。頭金・この諸費用は「購入前」の資金から支出されます">ⓘ</span></label><input type="text" inputmode="decimal" class="num-input auto-filled" id="cost1" value=""></div>
         <div class="field"><label>耐用年数（年・簡便法）</label><input type="text" inputmode="decimal" class="num-input auto-filled" id="usefulLife" value=""></div>
-        <div class="hint">登記費用・ローン事務費・修繕積立一括金・引越・家具家電等の合計。頭金・この諸費用は「購入前」の資金から支出されます</div>
       </div>
     </details>
 
     <details class="group">
       <summary><span class="tag">B</span> ローン条件（現居）</summary>
       <div class="group-body">
-        <div class="field"><label>金利（%・全期間固定と仮定）</label><input type="text" inputmode="decimal" class="num-input auto-filled" id="rate" value=""></div>
+        <div class="callout" id="loanBalanceStatus" style="margin-bottom:8px;margin-top:0;"></div>
+        <div class="field"><label>金利（%・任意）<span class="info-icon" title="不動産売却益計算シミュレーターと未連携の場合の、簡易な残高計算(全期間この金利で固定と仮定)に使う値です。連携している場合は、この欄の値ではなく不動産売却益計算シミュレーター側の正確な残高計算(金利変動シナリオ等を反映)が優先されます">ⓘ</span></label><input type="text" inputmode="decimal" class="num-input auto-filled" id="rate" value=""></div>
         <div class="field"><label>返済期間（年）</label><input type="text" inputmode="decimal" class="num-input auto-filled" id="loanTerm" value=""></div>
       </div>
     </details>
@@ -733,7 +733,7 @@ header p{margin:0;color:var(--ink-soft);font-size:13.5px;}
       <div class="group-body">
         <div id="valSnapshotList"></div>
         <button id="addSnapshotBtn" type="button" style="width:100%;padding:7px;border-radius:6px;border:1px solid var(--gold);background:var(--cream);color:#000;font-weight:700;font-size:12px;cursor:pointer;">＋ 年を追加</button>
-        <div class="hint">①購入価格からの差額が値上がり額として表示されます。年を追加すると時価評価パネルが複数枚並びます</div>
+        <div class="hint">A「物件購入」の購入価格からの差額が値上がり額として表示されます。年を追加すると時価評価パネルが複数枚並びます</div>
       </div>
     </details>
 
@@ -797,8 +797,8 @@ header p{margin:0;color:var(--ink-soft);font-size:13.5px;}
     <details class="group">
       <summary><span class="tag">I</span> 住宅ローン控除の反映</summary>
       <div class="group-body">
-        <div class="hint" id="mortgageDeductionStatus" style="margin-bottom:8px;"></div>
-        <div class="field toggle"><label>控除還付を現預金に反映<span class="info-icon" title="②不動産売却益計算シミュレーターの「⑥参考：住宅ローン控除還付」で計算した金額を、E時価評価の各年の現預金に加算します。①住宅ローン返済シミュレーターのデータが②に取り込まれ、②からこちらにデータ連携されている場合のみ金額が入ります。何も連携されていない場合は0円として扱われます">ⓘ</span></label>
+        <div class="callout" id="mortgageDeductionStatus" style="margin-bottom:8px;margin-top:0;"></div>
+        <div class="field toggle"><label>控除還付を現預金に反映<span class="info-icon" title="不動産売却益計算シミュレーターの「⑥参考：住宅ローン控除還付」で計算した金額を、E時価評価の各年の現預金に加算します。住宅ローン返済シミュレーターのデータが不動産売却益計算シミュレーターに取り込まれ、そこからこちらにデータ連携されている場合のみ金額が入ります。何も連携されていない場合は0円として扱われます">ⓘ</span></label>
           <input type="checkbox" id="applyMortgageDeduction" style="width:18px;height:18px;">
         </div>
       </div>
@@ -875,6 +875,10 @@ function clearAutoFilledStyles(){
 // ②から連携された、経過年数ごとの住宅ローン控除還付累計額(万円)のスケジュール。
 // 例: {0: 0, 1: 32.5, 2: 64.8, ...}。未連携の場合は空のまま(=0円扱い)。
 let importedMortgageDeductionByYear = {};
+// ②から連携された、経過年数ごとの正確な借入残高(万円)のスケジュール。①の金利変動シナリオ・
+// 繰り上げ返済等を反映した②の計算結果そのもの。連携が無い場合は、従来通りの簡易な
+// 元利均等再計算(loanBalance関数)にフォールバックする。
+let importedLoanBalanceByYear = {};
 
 function validateGainPrefillData(raw){
   let data;
@@ -893,6 +897,11 @@ function validateGainPrefillData(raw){
   // 住宅ローン控除スケジュールは単一の数値ではないため、PREFILL_FIELD_IDSとは別枠で受け取る
   if(data.mortgageDeductionByYear && typeof data.mortgageDeductionByYear==='object'){
     values.__mortgageDeductionByYear = data.mortgageDeductionByYear;
+    count++;
+  }
+  // 借入残高スケジュールも同様に別枠で受け取る(①の金利変動シナリオ等を反映した②の正確な残高)
+  if(data.loanBalanceByYear && typeof data.loanBalanceByYear==='object'){
+    values.__loanBalanceByYear = data.loanBalanceByYear;
     count++;
   }
   if(count===0) return null;
@@ -914,7 +923,7 @@ function applyGainPrefill(showAlert){
     return false;
   }
   Object.keys(values).forEach(id=>{
-    if(id==='__mortgageDeductionByYear') return;
+    if(id==='__mortgageDeductionByYear' || id==='__loanBalanceByYear') return;
     const el = $(id);
     if(!el) return;
     el.value = values[id];
@@ -923,6 +932,9 @@ function applyGainPrefill(showAlert){
   });
   if(values.__mortgageDeductionByYear){
     importedMortgageDeductionByYear = values.__mortgageDeductionByYear;
+  }
+  if(values.__loanBalanceByYear){
+    importedLoanBalanceByYear = values.__loanBalanceByYear;
   }
   updateMortgageDeductionStatus();
   safeRender();
@@ -933,10 +945,20 @@ function updateMortgageDeductionStatus(){
   const box = $('mortgageDeductionStatus');
   if(!box) return;
   const hasData = importedMortgageDeductionByYear && Object.keys(importedMortgageDeductionByYear).length>0;
-  box.textContent = hasData
-    ? '②不動産売却益計算シミュレーターから住宅ローン控除のデータを連携済みです。'
-    : '②不動産売却益計算シミュレーターからまだデータが連携されていません（0円として扱われます）。①→②→③の順にデータを連携してください。';
-  box.style.color = hasData ? 'var(--slate)' : 'var(--clay)';
+  box.innerHTML = hasData
+    ? '<b>✓ 連携済み</b>：不動産売却益計算シミュレーターの住宅ローン控除データを使用します。'
+    : '<b>△ 未連携</b>：不動産売却益計算シミュレーターと連携すると、住宅ローン控除の還付額が使えるようになります（今は0円）。';
+  box.classList.toggle('gold', hasData);
+}
+
+function updateLoanBalanceStatus(){
+  const box = $('loanBalanceStatus');
+  if(!box) return;
+  const hasData = importedLoanBalanceByYear && Object.keys(importedLoanBalanceByYear).length>0;
+  box.innerHTML = hasData
+    ? '<b>✓ 連携済み</b>：不動産売却益計算シミュレーターの正確な残高（金利変動シナリオ等を反映）を使用します。下の「金利」欄の値は使いません。'
+    : '<b>△ 未連携</b>：下の「金利」を使い、全期間その率で固定という前提の簡易計算をします。';
+  box.classList.toggle('gold', hasData);
 }
 
 // ---------- 時価評価スナップショット（複数年）の状態管理 ----------
@@ -1014,6 +1036,24 @@ function cashAt(elapsedYears, cash0, cashAnnual, mortgageDeductionAmount){
 // ②不動産売却益計算シミュレーターから連携された、経過年数ごとの住宅ローン控除還付累計額(万円)を引く。
 // 連携データが無い、またはチェックがオフの場合は0円(このため呼び出し側で分岐は不要)。
 // 連携データにその経過年数がちょうど無い場合は、直近で計算済みの年の値を使う(それ以降は増えないため妥当)。
+// ②から連携された、経過年数ごとの正確な借入残高(万円)のスケジュールがあればそれを使い、
+// 無ければ従来通りの簡易な元利均等再計算(loanBalance)にフォールバックする。
+// スケジュールにちょうどその経過年が無い場合は、直近の計算済みの年の値を使う。
+function loanBalanceForElapsed(elapsedYears, principal, ratePct, termYears){
+  const schedule = importedLoanBalanceByYear;
+  if(schedule && typeof schedule==='object'){
+    const keys = Object.keys(schedule).map(Number).filter(k=>isFinite(k)).sort((a,b)=>a-b);
+    if(keys.length){
+      const roundedElapsed = Math.round(elapsedYears);
+      if(schedule[roundedElapsed]!=null) return Number(schedule[roundedElapsed])||0;
+      let use = null;
+      for(const k of keys){ if(k<=roundedElapsed) use = k; else break; }
+      if(use!=null) return Number(schedule[use])||0;
+      // 経過年がスケジュールの最初の年より前(通常は起きないが念のため)は簡易計算にフォールバック
+    }
+  }
+  return loanBalance(principal, ratePct, termYears, elapsedYears);
+}
 function mortgageDeductionCumulativeForElapsed(elapsedYears){
   if(!$('applyMortgageDeduction') || !$('applyMortgageDeduction').checked) return 0;
   const schedule = importedMortgageDeductionByYear;
@@ -1049,7 +1089,7 @@ function splitNetWorth(currentCombined, base){
 
 function computeValuationSnapshot(elapsedYears, priceAtTime, base){
   const {price1, buildingRatio, usefulLife, cost1, loan1, rate, term, sec0, secAnnual, secYield, cash0, cashAnnual, sellFeeRate, deduction3000, down1} = base;
-  const loanBal = loanBalance(loan1, rate, term, elapsedYears);
+  const loanBal = loanBalanceForElapsed(elapsedYears, loan1, rate, term);
   const principalPaid = loan1 - loanBal;
   const appreciation = priceAtTime - price1;
   const sec = secAt(elapsedYears, sec0, secAnnual, secYield);
@@ -1380,7 +1420,7 @@ const barLabelsPlugin = {
         const edgeX = isLeftSide ? (g.bar.x - g.bar.width/2) : (g.bar.x + g.bar.width/2);
         const shaftX = isLeftSide ? edgeX - ARROW_REACH.homeEquity : edgeX + ARROW_REACH.homeEquity;
         if(!leaderQueue[ci]) leaderQueue[ci] = [];
-        leaderQueue[ci].push({y, name:'自己資本', val:g.sum, bar:g.bar, textColor:HOME_EQUITY_COLOR, isHomeEquity:true, startX:shaftX});
+        leaderQueue[ci].push({y, name:'純資産', val:g.sum, bar:g.bar, textColor:HOME_EQUITY_COLOR, isHomeEquity:true, startX:shaftX});
       });
     }
 
@@ -1469,7 +1509,7 @@ const barLabelsPlugin = {
 // "}" bracket. Nested ranges (e.g. 自己資本 contains 値上がり) share the same shaft
 // x-position and overlap; each range's label sits in the vertical segment unique to it
 // so labels never collide with each other.
-const ARROW_LABELS = { appreciation:'値上がり', homeEquity:'自己資本' };
+const ARROW_LABELS = { appreciation:'値上がり', homeEquity:'純資産' };
 const ARROW_REACH = { appreciation: 12, homeEquity: 6 };
 const ARROW_COLOR = '#E8792A'; // orange, for 値上がり
 const HOME_EQUITY_COLOR = '#239B5C'; // slightly brighter green, for 自己資本
@@ -2102,7 +2142,7 @@ function render(){
         <div class="alloc-row"><label>現預金充当</label><input type="text" inputmode="decimal" class="alloc-input num-input" data-key="downCash" data-total="${core.down1}" value="${Math.round(core.downCashAlloc)}"><label>有価証券等売却益充当</label><input type="text" inputmode="decimal" class="alloc-input num-input" data-key="downSec" data-pair="downCash" data-total="${core.down1}" value="${Math.round(core.downSecAlloc)}"></div>
         <div class="alloc-title">諸費用等支払 ${fmt(core.cost1Abs)}万円</div>
         <div class="alloc-row"><label>現預金充当</label><input type="text" inputmode="decimal" class="alloc-input num-input" data-key="costCash" data-total="${core.cost1Abs}" value="${Math.round(core.costCashAlloc)}"><label>有価証券等売却益充当</label><input type="text" inputmode="decimal" class="alloc-input num-input" data-key="costSec" data-pair="costCash" data-total="${core.cost1Abs}" value="${Math.round(core.costSecAlloc)}"></div>
-        <div class="alloc-hint">現預金を優先的に充当し、不足分を有価証券等の売却益で補います（②に反映）。どちらの金額も編集できます</div>
+        <div class="alloc-hint">現預金を優先的に充当し、不足分を有価証券等の売却益で補います（「購入直後」に反映）。どちらの金額も編集できます</div>
       </div>`;
     if(s.group==='sale') extra = `
       <div class="callout gold" id="calloutBreakdown_${idx}"></div>
@@ -2186,7 +2226,7 @@ function render(){
       }
       total = core.liquidPre;
       summaryHtml = cost1Abs > 0
-        ? `頭金・購入諸費用に充てる前の資金です。下の赤枠は②への移行で既に支払われる購入時諸費用です`
+        ? `頭金・購入諸費用に充てる前の資金です。下の赤枠は「購入直後」への移行で既に支払われる購入時諸費用です`
         : `頭金・購入諸費用に充てる前の資金です`;
     } else if(s.group==='post'){
       const {baseShown, increase} = splitNetWorth(core.base.cash0+core.base.sec0, core.netWorthBase);
@@ -2233,9 +2273,9 @@ function render(){
       }
       total = snapPrice + calc.sec + calc.cash + core.otherAssets;
       summaryHtml = `値上がり ${fmt(calc.appreciation)}万円（保有${fmt(snap.elapsed)}年＝${calc.holdLong?'長期':'短期'}譲渡想定）<span style="color:var(--ink-soft);font-weight:400;">　※評価額(${fmt(snapPrice)}万円)ベースの概算</span>`;
-      noteHtml = `含み益(税引後)は将来の納税額を除いた額です。含み益(将来納税額)${fmt(calc.tax)}万円は将来の納税に備えた金融資産内の見込み額で、保有中のため未実現・実際の現預金流出はまだ発生していません。「金融資産(増加分)」は②購入直後からの増加分です`;
+      noteHtml = `含み益(税引後)は将来の納税額を除いた額です。含み益(将来納税額)${fmt(calc.tax)}万円は将来の納税に備えた金融資産内の見込み額で、保有中のため未実現・実際の現預金流出はまだ発生していません。「金融資産(増加分)」は「購入直後」からの増加分です`;
       if(calc.mortgageDeductionAmount > 0){
-        noteHtml += `<br>現預金には、②不動産売却益計算シミュレーターから連携した住宅ローン控除還付の累計額${fmt(calc.mortgageDeductionAmount)}万円（${fmt(snap.elapsed)}年目時点）を加算しています`;
+        noteHtml += `<br>現預金には、不動産売却益計算シミュレーターから連携した住宅ローン控除還付の累計額${fmt(calc.mortgageDeductionAmount)}万円（${fmt(snap.elapsed)}年目時点）を加算しています`;
       }
     } else if(s.group==='sale'){
       const {baseShown, increase} = splitNetWorth(core.cashAtSaleFinal+core.secAtSaleFinal, core.netWorthBase);
@@ -2254,7 +2294,7 @@ function render(){
       ds.push({label:'購入仲介手数料', data:[null, -reacqFeeFromPool], backgroundColor:'#FFFFFF', group:'outflow', isOutflow:true});
       ds.push({label:'新居購入時諸費用', shortLabel:'諸費用', data:[null, -reacqCostFromPool], backgroundColor:'#FFFFFF', group:'outflow', isOutflow:true});
       total = core.cashAtSaleFinal + core.secAtSaleFinal + core.otherAssets;
-      summaryHtml = `売却手取り ${fmt(core.netSaleProceeds)}万円は現預金から先に差し引き、現預金が不足する場合は有価証券の取り崩しで補います${core.saleShortfall>0?'<br><b style="color:#B15C4A;">⚠ 有価証券を全て取り崩しても'+fmt(core.saleShortfall)+'万円不足しています</b>':''}${core.saleSnap.mortgageDeductionAmount>0?`<br>現預金には、②から連携した住宅ローン控除還付の累計額${fmt(core.saleSnap.mortgageDeductionAmount)}万円を加算しています`:''}`;
+      summaryHtml = `売却手取り ${fmt(core.netSaleProceeds)}万円は現預金から先に差し引き、現預金が不足する場合は有価証券の取り崩しで補います${core.saleShortfall>0?'<br><b style="color:#B15C4A;">⚠ 有価証券を全て取り崩しても'+fmt(core.saleShortfall)+'万円不足しています</b>':''}${core.saleSnap.mortgageDeductionAmount>0?`<br>現預金には、不動産売却益計算シミュレーターから連携した住宅ローン控除還付の累計額${fmt(core.saleSnap.mortgageDeductionAmount)}万円を加算しています`:''}`;
       saleCallout = `<b>★の内訳</b><br>Equity（売却価格${fmt(core.salePrice)}－借入金${fmt(core.saleSnap.loanBal)}＝${fmt(core.salePrice-core.saleSnap.loanBal)}）－ 売却仲介手数料${fmt(core.sellFeeAtSale)} － 譲渡所得税${fmt(core.capitalGainsTax3)}　＝　<b>売却手取り ${fmt(core.netSaleProceeds)}万円</b><br><span style="font-weight:400;">内訳：頭金${fmt(core.down1)}＋返済分${fmt(core.saleSnap.principalPaid)}＋含み益${fmt(Math.max(0,core.saleSnap.gainNet))}＋納税準備金${fmt(core.capitalGainsTax3)}＝${fmt(core.saleSnap.homeEquity+core.capitalGainsTax3)}<br>譲渡所得税の内訳：所得税＋復興特別所得税 ${fmt(core.nationalTax3)}万円　＋　住民税 ${fmt(core.residentTax3)}万円　＝　${fmt(core.capitalGainsTax3)}万円（住民税は翌年度に別途納付）</span>`;
       blankMirror = {fromValue:0, toValue:-(reacqFeeFromPool+reacqCostFromPool), targetCol:0};
     } else if(s.group==='reacq'){
@@ -2387,11 +2427,12 @@ function render(){
   equalizeBoxHeights('.legend-box');
   equalizeBoxHeights('.panel-summary');
   updateMortgageDeductionStatus();
+  updateLoanBalanceStatus();
 
   $('footnotes').innerHTML = `
     <div><b>*2 有価証券</b>：購入直後の保有額を年利${num('secYield')}%で運用、毎年${num('secAnnual')}万円を積立（複利）</div>
-    <div><b>*3 現預金</b>：年間貯蓄${num('cashAnnual')}万円 × 経過年${$('applyMortgageDeduction') && $('applyMortgageDeduction').checked ? ' ＋ 住宅ローン控除還付累計（②から連携。各年の内訳はBS図下の説明欄を参照）' : ''}</div>
-    <div><b>*4 自己資金(返済分)</b>：元利均等・金利${num('rate')}%・${num('loanTerm')}年の元本返済累計分（借入金－各時点の借入残高）</div>
+    <div><b>*3 現預金</b>：年間貯蓄${num('cashAnnual')}万円 × 経過年${$('applyMortgageDeduction') && $('applyMortgageDeduction').checked ? ' ＋ 住宅ローン控除還付累計（不動産売却益計算シミュレーターから連携。各年の内訳はBS図下の説明欄を参照）' : ''}</div>
+    <div><b>*4 自己資金(返済分)</b>：借入金－各時点の借入残高（${Object.keys(importedLoanBalanceByYear||{}).length ? '不動産売却益計算シミュレーターと連携済みのため、金利変動シナリオ等を反映した正確な残高を使用' : `不動産売却益計算シミュレーターと未連携のため、元利均等・金利${num('rate')}%・${num('loanTerm')}年の簡易計算`}）</div>
     <div><b>*5 譲渡税/納税準備金</b>：建物の減価償却費・取得費用${$('deduction3000').checked?'、3,000万円特別控除':''}を反映した課税所得 × 税率（保有5年超＝20.315%／5年以下＝39.63%）。時価評価の「納税準備金」は各年の評価額に基づく見込み額、★の「譲渡所得税」は売却価格に基づく確定額で、同じ税を時点違いで表しています</div>
     <div><b>*6 仲介手数料</b>：売却手数料${num('sellFeeRate')}%、購入手数料${num('buyFeeRate')}%</div>
     <div><b>純資産の考え方</b>：残債を除いた持ち分は、値上がりがなければ「頭金＋返済分」、値上がりがあれば「頭金＋返済分＋含み益」。いずれも純資産として扱います</div>
